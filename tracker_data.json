@@ -7,5 +7,14 @@
     "water": 0.0,
     "internet": 0.0,
     "additional_costs": []
+  },
+  "2025-05": {
+    "month_name": "2025-05",
+    "rent": 2000.0,
+    "heating": 2000.0,
+    "electric": 2000.0,
+    "water": 200.0,
+    "internet": 2000.0,
+    "additional_costs": []
   }
 }

@@ -3,11 +3,11 @@ from month import Month
 import json
 
 
-def create_new_month(month_name=None):
+def create_new_month(month_name = None):
     print("Creating new month...")
 
-    # If month_name not provided or is "prompt", ask for it
-    if month_name is None or month_name == "prompt":
+    # If month_name not provided or is None, ask for it
+    if month_name is None:
         month_name = get_month_input()
     else:
         # Validate the provided month format
@@ -17,10 +17,7 @@ def create_new_month(month_name=None):
         except ValueError:
             print("Invalid month format. Please use YYYY-MM format.")
             return None
-
-
-
-    month_name = get_month_input() 
+ 
     rent = get_dollar_input("rent")
     heating = get_dollar_input("heating")
     electric = get_dollar_input("electric")
