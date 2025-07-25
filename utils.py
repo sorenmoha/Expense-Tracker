@@ -4,6 +4,7 @@ import json
 
 
 def create_new_month(month_name = None):
+
     print("Creating new month...")
 
     # If month_name not provided or is None, ask for it
@@ -37,6 +38,8 @@ def get_month_input():
         except ValueError:
             print("Please enter valid format YYYY-MM")
 
+
+
 def get_dollar_input(type):
     while True:
         try:
@@ -48,25 +51,36 @@ def get_dollar_input(type):
         except ValueError:
             print("Please enter a valid dollar amount")
 
-
-def view_month(month_date, months_dict):
-    print(f"displaying summary for {month_date}")
-
-    if month_date not in months_dict:
-        print(f"No month found for {month_date} ")
+def delete_month(month_date_to_delete, months_dict):
+    print(f"deleting {month_date_to_delete}")
+    if month_date_to_delete not in months_dict:
+        print(f"No month found for {month_date_to_delete} ")
         return
     
-    months_dict[month_date].displaySummary()
+    if input("Are you sure? (y/n): ").lower() == 'y':
+        del months_dict[month_date_to_delete]
+        print(f"deleted {month_date_to_delete}")
+    else:
+        print("cancelled")
 
-def edit_month(month_date, value_to_edit, months_dict):
+def view_month(month_date_to_view, months_dict):
+    print(f"displaying summary for {month_date_to_view}")
+
+    if month_date_to_view not in months_dict:
+        print(f"No month found for {month_date_to_view} ")
+        return
+    
+    months_dict[month_date_to_view].displaySummary()
+
+def edit_month(month_date, utility_to_edit, months_dict):
     if month_date not in months_dict:
         print(f"No month found for {month_date}")
         return
 
-    new_value = get_dollar_input(f"{value_to_edit}")  # Uses your validation
+    new_value = get_dollar_input(f"{utility_to_edit}")  # Uses your validation
     month_object = months_dict[month_date]
-    setattr(month_object, value_to_edit, new_value)
-    print(f"Updated {value_to_edit} to ${new_value:.2f}")
+    setattr(month_object, utility_to_edit, new_value)
+    print(f"Updated {utility_to_edit} to ${new_value:.2f}")
     
 def list_months(months_dict):
     print("Listing all months...")
