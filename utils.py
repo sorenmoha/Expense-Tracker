@@ -46,6 +46,15 @@ def view_month(month_date, months_dict):
     
     months_dict[month_date].displaySummary()
 
+def edit_month(month_date, value_to_edit, months_dict):
+    if month_date not in months_dict:
+        print(f"No month found for {month_date}")
+        return
+
+    new_value = get_dollar_input(f"{value_to_edit}")  # Uses your validation
+    month_object = months_dict[month_date]
+    setattr(month_object, value_to_edit, new_value)
+    print(f"Updated {value_to_edit} to ${new_value:.2f}")
     
 def list_months(months_dict):
     print("Listing all months...")

@@ -2,7 +2,7 @@ import argparse
 import sys
 
 from month import Month
-from utils import create_new_month, get_month_input, get_dollar_input, view_month, list_months
+from utils import create_new_month, view_month, list_months, edit_month  
 
 def main():
 
@@ -11,19 +11,30 @@ def main():
         prog="tracker",
         description="Personal Budget Tracker - Track monthly expenses and utilities",
         epilog="""Examples:
+  tracker -n                          Create a new month entry
   tracker --new-entry                 Create a new month entry
-  tracker --edit-entry 2025-01        Edit January 2025 expenses  
-  tracker --view 2025-01              View January 2025 summary
+  
+  tracker -e 2025-01 -t rent          Edit January 2025 rent  
+  tracker --edit-month 2025-01 --edit-value rent    Edit January 2025 rent
+  
+  tracker -v 2025-01                  View January 2025 summary
+  tracker --view-month 2025-01        View January 2025 summary
+  
+  tracker -l                          List all tracked months
   tracker --list                      List all tracked months""",
-        formatter_class=argparse.RawDescriptionHelpFormatter
+        formatter_class = argparse.RawDescriptionHelpFormatter
     )
     
-    parser.add_argument("--new-entry", action="store_true", 
-                       help="Create a new month entry")
-    parser.add_argument("--view", metavar="YYYY-MM", 
-                       help="View month summary (format: YYYY-MM)")
-    parser.add_argument("--list", action="store_true", 
-                       help="List all tracked months")
+    parser.add_argument("-n", "--new-entry", action="store_true", 
+                    help="Create a new month entry")
+    parser.add_argument("-e", "--edit-month", metavar="YYYY-MM", 
+                    help="Edit an existing month")
+    parser.add_argument("-t", "--edit-value", choices=["rent", "heating", "electric", "water", "internet"], 
+                    help="Which value to edit")
+    parser.add_argument("-v", "--view-month", metavar="YYYY-MM", 
+                    help="View month summary")
+    parser.add_argument("-l", "--list", action="store_true", 
+                    help="List all tracked months")
     
     # Check if no arguments provided
     if len(sys.argv) == 1:
@@ -36,8 +47,13 @@ def main():
             new_month = create_new_month()
             months_dict[new_month.month_name] = new_month    ## adds the month name (2025-04) to the months dictionary
 
-        elif args.view:
-            view_month(args.view, months_dict)
+        elif args.view_month:
+            view_month(args.view_month, months_dict)
+
+        elif args.edit_month:
+            if not args.edit_value:
+                parser.error("--edit-month requires --edit-value")
+            edit_month(args.edit_month, args.edit_value, months_dict)
 
         elif args.list:
             list_months(months_dict)
@@ -54,7 +70,5 @@ def main():
         print("Use --help for usage information.")
         sys.exit(1)
 
-
-    
 if __name__ == "__main__":
     main()
