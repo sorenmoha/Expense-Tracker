@@ -2,7 +2,7 @@ import argparse
 import sys
 
 from month import Month
-from utils import create_new_month, view_month, list_months, delete_month, edit_month, save_data, load_data  
+from utils import create_new_month, view_month, list_months, delete_month, edit_month, save_data, load_data, add_additional_cost_interactive  
 
 def main():
 
@@ -20,7 +20,15 @@ def main():
   tracker --edit-month 2025-01 --edit-utility rent    Edit January 2025 rent
   
   tracker -l                          List all tracked months
-  tracker --list 2025-01              View January 2025 summary""",
+  tracker --list 2025-01              View January 2025 summary
+  
+  tracker -d 2025-01                  Delete a month entry 
+  tracker --delete-month              Delete a month entry
+  
+  tracker -a                          Add additional cost 
+  tracker -add-cost                   Add additional cost           
+  
+  """,
         formatter_class = argparse.RawDescriptionHelpFormatter
     )
     
@@ -34,7 +42,12 @@ def main():
                     help="Which value to edit")
     parser.add_argument("-l", "--list", metavar="YYYY-MM", nargs="?", const=None,
                     help="List all months or show specific month summary (YYYY-MM)")
-                   
+    parser.add_argument("-a", "--add-cost", metavar="YYYY-MM",
+                    help="Add additional cost to an existing month (interactive)")
+    parser.add_argument("-ca", "--cost-amount", type=float, metavar="AMOUNT",
+                    help="Amount for the additional cost")
+    parser.add_argument("-cd", "--cost-description", metavar="DESCRIPTION",
+                    help="Description for the additional cost")
     
     # Check if no arguments provided
     if len(sys.argv) == 1:
@@ -61,8 +74,11 @@ def main():
             save_data(months_dict)
 
         elif args.delete_month:
-          
             delete_month(args.delete_month, months_dict)
+            save_data(months_dict)
+
+        elif args.add_cost:
+            add_additional_cost_interactive(args.add_cost, months_dict)
             save_data(months_dict)
 
         elif 'list' in vars(args):  # --list was used (with or without value)
@@ -70,7 +86,6 @@ def main():
                 list_months(months_dict)
             else:  # --list 2025-01 (show specific)
                 view_month(args.list, months_dict)
-
         else:
             parser.error("Invalid command combination. Use --help for usage information.")
 

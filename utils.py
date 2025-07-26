@@ -38,9 +38,7 @@ def get_month_input():
         except ValueError:
             print("Please enter valid format YYYY-MM")
 
-
-
-def get_dollar_input(type):
+def get_dollar_input(type):  #type is what to take dollar input for (ex: the rent, an additional cost) 
     while True:
         try:
             amount = float(input(f"Enter Amount for {type}: "))
@@ -93,7 +91,19 @@ def list_months(months_dict):
         total = month_obj.calculate_total_month_due()
         print(f"  {date}: ${total:.2f}")
 
-        import json
+def add_additional_cost_interactive(month_date, months_dict):
+    if not months_dict:
+        print(f"No month found for {month_date}")
+        return 
+    amount = get_dollar_input("Additional cost")
+    description = input("Enter the description: ")
+
+    if not description: 
+        print("description cannot be empty")
+        return
+    months_dict[month_date].add_additional_cost(amount, description)
+    print(f"added: {amount} description: {description}" )
+
 
 # saves to a static file
 def save_data(months_dict):
