@@ -8,22 +8,24 @@ This tool helps track monthly expenses like rent, utilities, and additional cost
 
 ## Usage
 
-### Create a new month entry
-```bash
-python tracker.py -n                    # Prompts for month and all values
-python tracker.py --new-entry 2025-01   # Creates entry for January 2025
-```
-```
-python tracker.py -l                    # Lists all tracked months
-python tracker.py --list 2025-01        # Shows detailed summary for January 2025
-```
-```
-python tracker.py -e 2025-01 -t rent    # Edit January 2025 rent amount
-python tracker.py --edit-month 2025-01 --edit-utility electric
-```
-```
-python tracker.py -d 2025-01            # Delete January 2025 entry
-```
+  ```tracker -n                                        #Create new month entry
+  tracker --new-entry                                  #Create new month entry
+  tracker --new-entry YYYY-MM                          #Create new month entry for specified month```
+  
+  ```tracker -e YYYY-MM -t rent                        #Edit a months rent  
+  tracker --edit-month YYYY-MM --edit-utility rent     #Edit a months rent```
+  
+  ```tracker -l                                        #List all tracked dates
+  tracker --list YYYY-MM                               #View summary```
+  
+  ```tracker -d 2025-01                                #Delete a month entry 
+  tracker --delete-month                               #Delete a month entry```
+  
+  ```tracker -a                                        #Add additional cost 
+  tracker --add-cost                                   #Add additional cost``` 
+
+  ```tracker -dc 2025-01                               #Delete an additional cost for specified month
+  tracker --delete-cost 2025-01                        #Delete an additional cost for specified month```            
 
 
 #### Requirements

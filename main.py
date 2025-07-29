@@ -12,15 +12,15 @@ def main():
         prog="tracker",
         description="Personal Budget Tracker - Track monthly expenses and utilities",
         epilog="""Examples:
-  tracker -n                                           Create a new month entry
-  tracker --new-entry                                  Create a new month entry
-  tracker --new-entry 2025-01                          Create a new month entry for January 2025
+  tracker -n                                           Create new month entry
+  tracker --new-entry                                  Create new month entry
+  tracker --new-entry YYYY-MM                          Create new month entry for specified month
   
-  tracker -e 2025-01 -t rent                           Edit January 2025 rent  
-  tracker --edit-month 2025-01 --edit-utility rent     dit January 2025 rent
+  tracker -e YYYY-MM -t rent                           Edit a months rent  
+  tracker --edit-month YYYY-MM --edit-utility rent     Edit a months rent
   
-  tracker -l                                           List all tracked months
-  tracker --list 2025-01                               View January 2025 summary
+  tracker -l                                           List all tracked dates
+  tracker --list YYYY-MM                               View summary
   
   tracker -d 2025-01                                   Delete a month entry 
   tracker --delete-month                               Delete a month entry

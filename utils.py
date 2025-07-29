@@ -6,7 +6,7 @@ import json
 def create_new_month(month_name = None):
 
     print("Creating new month...")
-
+       
     # If month_name not provided or is None, ask for it
     if month_name is None:
         month_name = get_month_input()
@@ -42,13 +42,9 @@ def get_dollar_input(type):  #type is what to take dollar input for (ex: the ren
     while True:
         try:
             amount = float(input(f"Enter Amount for {type}: "))
-            if amount < 0:
-                print("Amount cannot be negative")
-                continue
             return round(amount, 2)
         except ValueError:
             print("Please enter a valid dollar amount")
-
 
 def delete_month(month_date_to_delete, months_dict):
     print(f"deleting {month_date_to_delete}")
@@ -62,7 +58,6 @@ def delete_month(month_date_to_delete, months_dict):
         save_data(months_dict)
     else:
         print("cancelled")
-
 
 def edit_month(month_date, utility_to_edit, months_dict):
     if month_date not in months_dict:
@@ -90,6 +85,7 @@ def add_additional_cost_interactive(month_date, months_dict):
     if month_date not in months_dict:
         print(f"No month found for {month_date}")
         return
+    months_dict[month_date].display_additional_costs()
     amount = get_dollar_input("Additional cost")
     description = input("Enter the description: ")
 
@@ -111,12 +107,12 @@ def delete_additional_cost_interactive(date_selected, months_dict):
     if date_selected not in months_dict:
         print(f"No month found for {date_selected}")
         return
-    
-    months_dict[date_selected].display_additional_costs()
 
     if not months_dict[date_selected].additional_costs:
         print("No additional costs to delete.")
         return
+    
+    months_dict[date_selected].display_additional_costs()
         
     number_to_delete = input("Which additional cost to delete? (Enter #): ")
     months_dict[date_selected].delete_additional_cost(number_to_delete)

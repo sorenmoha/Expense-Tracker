@@ -46,9 +46,11 @@ class Month:
         return sum(cost["amount"] for cost in self.additional_costs)
 
     def add_additional_cost(self, amount, description):
+        self.display_additional_costs()
         cost_entry = {"amount": amount, "description": description}
         self.additional_costs.append(cost_entry)
         print(f"Added: ${amount:.2f} - {description}")
+        self.display_additional_costs()
 
     def delete_additional_cost(self, number_to_delete):
         try: 
@@ -66,11 +68,12 @@ class Month:
         deleted_item = self.additional_costs[index]
         self.additional_costs.pop(index)
         print(f"Deleted entry {number}: ${deleted_item['amount']:.2f} - {deleted_item['description']}")
+        self.display_additional_costs()
 
     def display_additional_costs(self):
         print(f"\n ADDITIONAL COSTS:")
         if not self.additional_costs:
-            print("  ----- ")
+            print("No additional costs stored")
         else:
             for i, cost in enumerate(self.additional_costs, 1):
                 print(f"   {i}. {cost['description']}: ${cost['amount']:.2f}")
