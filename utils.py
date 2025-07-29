@@ -58,6 +58,7 @@ def delete_month(month_date_to_delete, months_dict):
     if input("Are you sure? (y/n): ").lower() == 'y':
         del months_dict[month_date_to_delete]
         print(f"deleted {month_date_to_delete}")
+        save_data(months_dict)
     else:
         print("cancelled")
 
@@ -79,7 +80,10 @@ def edit_month(month_date, utility_to_edit, months_dict):
     month_object = months_dict[month_date]
     setattr(month_object, utility_to_edit, new_value)
     print(f"Updated {utility_to_edit} to ${new_value:.2f}")
+    save_data(months_dict)
+
     
+
 def list_months(months_dict):
     print("Listing all months...")
 
@@ -92,9 +96,9 @@ def list_months(months_dict):
         print(f"  {date}: ${total:.2f}")
 
 def add_additional_cost_interactive(month_date, months_dict):
-    if not months_dict:
+    if month_date not in months_dict:
         print(f"No month found for {month_date}")
-        return 
+        return
     amount = get_dollar_input("Additional cost")
     description = input("Enter the description: ")
 
@@ -103,6 +107,7 @@ def add_additional_cost_interactive(month_date, months_dict):
         return
     months_dict[month_date].add_additional_cost(amount, description)
     print(f"added: {amount} description: {description}" )
+    save_data(months_dict)
 
 
 # saves to a static file

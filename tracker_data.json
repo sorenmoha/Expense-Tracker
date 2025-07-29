@@ -1,13 +1,4 @@
 {
-  "2025-08": {
-    "month_name": "2025-08",
-    "rent": 1500.0,
-    "heating": 70.0,
-    "electric": 60.0,
-    "water": 70.0,
-    "internet": 80.0,
-    "additional_costs": []
-  },
   "2025-09": {
     "month_name": "2025-09",
     "rent": 500.0,

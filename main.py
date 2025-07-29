@@ -71,15 +71,15 @@ def main():
             if not args.edit_utility:
                 parser.error("--edit-month requires --edit-utility")
             edit_month(args.edit_month, args.edit_utility, months_dict)
-            save_data(months_dict)
+            
 
         elif args.delete_month:
             delete_month(args.delete_month, months_dict)
-            save_data(months_dict)
+            
 
         elif args.add_cost:
             add_additional_cost_interactive(args.add_cost, months_dict)
-            save_data(months_dict)
+            
 
         elif 'list' in vars(args):  # --list was used (with or without value)
             if args.list is None:  # Just --list (show all)
