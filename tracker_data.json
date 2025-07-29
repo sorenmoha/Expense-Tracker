@@ -6,11 +6,6 @@
     "electric": 230.0,
     "water": 24.0,
     "internet": 3.0,
-    "additional_costs": [
-      {
-        "amount": 15.0,
-        "description": "desc test"
-      }
-    ]
+    "additional_costs": []
   }
 }

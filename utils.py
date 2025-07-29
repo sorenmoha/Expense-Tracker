@@ -49,6 +49,7 @@ def get_dollar_input(type):  #type is what to take dollar input for (ex: the ren
         except ValueError:
             print("Please enter a valid dollar amount")
 
+
 def delete_month(month_date_to_delete, months_dict):
     print(f"deleting {month_date_to_delete}")
     if month_date_to_delete not in months_dict:
@@ -62,14 +63,6 @@ def delete_month(month_date_to_delete, months_dict):
     else:
         print("cancelled")
 
-def view_month(month_date_to_view, months_dict):
-    print(f"displaying summary for {month_date_to_view}")
-
-    if month_date_to_view not in months_dict:
-        print(f"No month found for {month_date_to_view} ")
-        return
-    
-    months_dict[month_date_to_view].displaySummary()
 
 def edit_month(month_date, utility_to_edit, months_dict):
     if month_date not in months_dict:
@@ -81,8 +74,6 @@ def edit_month(month_date, utility_to_edit, months_dict):
     setattr(month_object, utility_to_edit, new_value)
     print(f"Updated {utility_to_edit} to ${new_value:.2f}")
     save_data(months_dict)
-
-    
 
 def list_months(months_dict):
     print("Listing all months...")
@@ -109,8 +100,30 @@ def add_additional_cost_interactive(month_date, months_dict):
     print(f"added: {amount} description: {description}" )
     save_data(months_dict)
 
+def delete_additional_cost_interactive(date_selected, months_dict):
+    try:
+        datetime.datetime.strptime(date_selected, "%Y-%m")
+        print(f"Using month: {date_selected}")  # Confirm we're using the provided month
+    except ValueError:
+        print("Invalid month format. Please use YYYY-MM format.")
+        return 
+    
+    if date_selected not in months_dict:
+        print(f"No month found for {date_selected}")
+        return
+    
+    months_dict[date_selected].display_additional_costs()
 
-# saves to a static file
+    if not months_dict[date_selected].additional_costs:
+        print("No additional costs to delete.")
+        return
+        
+    number_to_delete = input("Which additional cost to delete? (Enter #): ")
+    months_dict[date_selected].delete_additional_cost(number_to_delete)
+    save_data(months_dict)
+
+    
+# IO helpers 
 def save_data(months_dict):
     """Save months_dict to tracker_data.json"""
     json_data = months_dict_to_json(months_dict)  # Convert objects to dict

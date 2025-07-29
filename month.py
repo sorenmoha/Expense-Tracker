@@ -9,7 +9,6 @@ class Month:
         self.internet = internet
         self.additional_costs = additional_costs
 
-
         #for validation 
         costs = {
             'rent': rent,
@@ -30,12 +29,10 @@ class Month:
     def calculate_total_utilities(self):
         return self.heating + self.electric + self.water + self.internet
     
-
     def calculate_utilities_per_roommate(self):
         total_utilities = self.calculate_total_utilities()
         return total_utilities / 2                             # ADD: number of roommates adjustment in settings?
           
-
     def calculate_total_housing_month_due(self):
         utilities_per_roommate = self.calculate_utilities_per_roommate()
         return self.rent + utilities_per_roommate
@@ -48,18 +45,39 @@ class Month:
     def calculate_total_additional_costs(self):
         return sum(cost["amount"] for cost in self.additional_costs)
 
-
     def add_additional_cost(self, amount, description):
         cost_entry = {"amount": amount, "description": description}
         self.additional_costs.append(cost_entry)
         print(f"Added: ${amount:.2f} - {description}")
 
+    def delete_additional_cost(self, number_to_delete):
+        try: 
+            number = int(number_to_delete) 
+        except ValueError:
+            print(f"Invalid entry number: {number_to_delete}")
+            return
+        
+        if number < 1 or number > len(self.additional_costs):
+            print(f"no entry found for {number}")
+            return
+        
+        index = number - 1
+        
+        deleted_item = self.additional_costs[index]
+        self.additional_costs.pop(index)
+        print(f"Deleted entry {number}: ${deleted_item['amount']:.2f} - {deleted_item['description']}")
 
-    def list_additional_costs(self):
-        for item in self.additional_costs:
-            print (item)
+    def display_additional_costs(self):
+        print(f"\n ADDITIONAL COSTS:")
+        if not self.additional_costs:
+            print("  ----- ")
+        else:
+            for i, cost in enumerate(self.additional_costs, 1):
+                print(f"   {i}. {cost['description']}: ${cost['amount']:.2f}")
+            print("-" * 35)
+            print(f"   Total Additional:    ${self.calculate_total_additional_costs():.2f}")
 
-    def displaySummary(self):
+    def display_summary(self):
         print("=" * 50)
         print(f"MONTH SUMMARY: {self.month_name}")
         print("=" * 50)
@@ -78,17 +96,10 @@ class Month:
         # Housing Total
         print(f"\n TOTAL HOUSING:       ${self.calculate_total_housing_month_due():.2f}")
         
-        # Additional Costs
-        print(f"\n ADDITIONAL COSTS:")
-        if not self.additional_costs:
-            print("   No additional costs")
-        else:
-            for i, cost in enumerate(self.additional_costs, 1):
-                print(f"   {i}. {cost['description']}: ${cost['amount']:.2f}")
-            print("-" * 35)
-            print(f"   Total Additional:    ${self.calculate_total_additional_costs():.2f}")
+        self.display_additional_costs()
         
         # Grand Total
         print("\n" + "=" * 50)
         print(f" TOTAL MONTH DUE:     ${self.calculate_total_month_due():.2f}")
         print("=" * 50)
+        

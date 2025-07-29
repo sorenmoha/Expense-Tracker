@@ -2,7 +2,7 @@ import argparse
 import sys
 
 from month import Month
-from utils import create_new_month, view_month, list_months, delete_month, edit_month, save_data, load_data, add_additional_cost_interactive  
+from utils import create_new_month, list_months, delete_month, edit_month, save_data, load_data, add_additional_cost_interactive, delete_additional_cost_interactive  
 
 def main():
 
@@ -12,21 +12,24 @@ def main():
         prog="tracker",
         description="Personal Budget Tracker - Track monthly expenses and utilities",
         epilog="""Examples:
-  tracker -n                          Create a new month entry
-  tracker --new-entry                 Create a new month entry
-  tracker --new-entry 2025-01         Create a new month entry for January 2025
+  tracker -n                                           Create a new month entry
+  tracker --new-entry                                  Create a new month entry
+  tracker --new-entry 2025-01                          Create a new month entry for January 2025
   
-  tracker -e 2025-01 -t rent          Edit January 2025 rent  
-  tracker --edit-month 2025-01 --edit-utility rent    Edit January 2025 rent
+  tracker -e 2025-01 -t rent                           Edit January 2025 rent  
+  tracker --edit-month 2025-01 --edit-utility rent     dit January 2025 rent
   
-  tracker -l                          List all tracked months
-  tracker --list 2025-01              View January 2025 summary
+  tracker -l                                           List all tracked months
+  tracker --list 2025-01                               View January 2025 summary
   
-  tracker -d 2025-01                  Delete a month entry 
-  tracker --delete-month              Delete a month entry
+  tracker -d 2025-01                                   Delete a month entry 
+  tracker --delete-month                               Delete a month entry
   
-  tracker -a                          Add additional cost 
-  tracker -add-cost                   Add additional cost           
+  tracker -a                                           Add additional cost 
+  tracker --add-cost                                   Add additional cost 
+
+  tracker -dc 2025-01                                  Delete an additional cost for specified month
+  tracker --delete-cost 2025-01                        Delete an additional cost for specified month            
   
   """,
         formatter_class = argparse.RawDescriptionHelpFormatter
@@ -48,6 +51,8 @@ def main():
                     help="Amount for the additional cost")
     parser.add_argument("-cd", "--cost-description", metavar="DESCRIPTION",
                     help="Description for the additional cost")
+    parser.add_argument("-dc", "--delete-cost", metavar="2025-01",
+            help="Delete an additional cost entry for (required) specified date")
     
     # Check if no arguments provided
     if len(sys.argv) == 1:
@@ -72,23 +77,25 @@ def main():
                 parser.error("--edit-month requires --edit-utility")
             edit_month(args.edit_month, args.edit_utility, months_dict)
             
-
         elif args.delete_month:
             delete_month(args.delete_month, months_dict)
             
-
         elif args.add_cost:
             add_additional_cost_interactive(args.add_cost, months_dict)
-            
 
-        elif 'list' in vars(args):  # --list was used (with or without value)
+        elif 'delete_cost' in vars(args) and args.delete_cost is not None:
+            delete_additional_cost_interactive(args.delete_cost, months_dict)
+            
+        elif 'list' in vars(args):  # --list was used (with or without value)  
             if args.list is None:  # Just --list (show all)
                 list_months(months_dict)
             else:  # --list 2025-01 (show specific)
-                view_month(args.list, months_dict)
-        else:
-            parser.error("Invalid command combination. Use --help for usage information.")
-
+                print(f"displaying summary for {args.list}")
+                if args.list in months_dict:
+                    months_dict[args.list].display_summary()  # NEW: Direct method call
+                else:
+                    print(f"No month found for {args.list}")
+                
     except KeyboardInterrupt:
         print("\nOperation cancelled by user.")
         sys.exit(1)
