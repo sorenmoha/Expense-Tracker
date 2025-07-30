@@ -9,6 +9,9 @@ class Month:
         self.internet = internet
         self.additional_costs = additional_costs
 
+
+        
+
         #for validation 
         costs = {
             'rent': rent,
@@ -159,3 +162,20 @@ class Month:
         print(f" TOTAL MONTH DUE:     ${self.calculate_total_month_due():.2f}")
         print("=" * 50)
         
+
+    def to_dict(self):
+    #Convert Month object to dictionary for JSON responses
+        return {
+            'month_name': self.month_name,
+            'rent': self.rent,
+            'heating': self.heating,
+            'electric': self.electric,
+            'water': self.water,
+            'internet': self.internet,
+            'total_utilities': self.calculate_total_utilities(),
+            'utilities_per_roommate': self.calculate_utilities_per_roommate(),
+            'total_housing': self.calculate_total_housing_month_due(),
+            'total_additional_costs': self.calculate_total_additional_costs(),
+            'total_month_due': self.calculate_total_month_due(),
+            'additional_costs': self.additional_costs
+        }
