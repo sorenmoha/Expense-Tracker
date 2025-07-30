@@ -77,6 +77,7 @@ class Month:
         cost_entry = {"amount": amount_to_edit, "description": description_to_edit}
         self.additional_costs[index] = cost_entry
         print(f"Updated Entry {number_to_edit}: ${amount_to_edit:.2f} - {description_to_edit}")
+        self.display_additional_costs()
         return True
 
     def delete_additional_cost(self, number_to_delete):
@@ -103,10 +104,34 @@ class Month:
         if not self.additional_costs:
             print("No additional costs stored")
         else:
+            # Calculate the maximum description length for proper spacing
+            max_desc_len = max(len(cost['description']) for cost in self.additional_costs)
+            desc_width = max(max_desc_len + 2, 20)  # At least 20 chars
+            
+            # Print header
+            print("─" * (desc_width + 20))
+            print(f"│ # │  Amount  │ Description{' ' * (desc_width - 11)}│")
+            print("─" * (desc_width + 20))
+            
+            # Print each row
             for i, cost in enumerate(self.additional_costs, 1):
-                print(f"   {i}. {cost['description']}: ${cost['amount']:.2f}")
-            print("-" * 35)
-            print(f"   Total Additional:    ${self.calculate_total_additional_costs():.2f}")
+                try:
+                    amount = float(cost['amount'])
+                except (ValueError, TypeError):
+                    amount = 0.0
+                
+                desc = cost['description']
+                # Pad description to fixed width
+                desc_padded = f"{desc:<{desc_width}}"
+                
+                print(f"│ {i} │ ${amount:>7.2f} │ {desc_padded}│")
+            
+            # Print total
+            print("─" * (desc_width + 20))
+            total = self.calculate_total_additional_costs()
+            total_desc = f"TOTAL{' ' * (desc_width - 5)}"
+            print(f"│   │ ${total:>7.2f} │ {total_desc}│")
+            print("─" * (desc_width + 20))
 
     def display_summary(self):
         print("=" * 50)
