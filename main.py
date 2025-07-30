@@ -2,7 +2,7 @@ import argparse
 import sys
 
 from month import Month
-from utils import create_new_month, list_months, delete_month, edit_month, save_data, load_data, add_additional_cost_interactive, delete_additional_cost_interactive  
+from utils import create_new_month, list_months, delete_month, edit_month, save_data, load_data, add_additional_cost_interactive, edit_additional_cost_interactive, delete_additional_cost_interactive  
 
 def main():
 
@@ -53,6 +53,8 @@ def main():
                     help="Description for the additional cost")
     parser.add_argument("-dc", "--delete-cost", metavar="2025-01",
             help="Delete an additional cost entry for (required) specified date")
+    parser.add_argument("-ec", "--edit-cost", metavar="2025-01",
+            help="Edit an additional cost entry for (required) specified date")
     
     # Check if no arguments provided
     if len(sys.argv) == 1:
@@ -83,16 +85,20 @@ def main():
         elif args.add_cost:
             add_additional_cost_interactive(args.add_cost, months_dict)
 
-        elif 'delete_cost' in vars(args) and args.delete_cost is not None:
+        elif args.edit_cost:
+            edit_additional_cost_interactive(args.edit_cost, months_dict)
+
+        # delete additional cost entry within month 
+        elif args.delete_cost:
             delete_additional_cost_interactive(args.delete_cost, months_dict)
             
-        elif 'list' in vars(args):  # --list was used (with or without value)  
-            if args.list is None:  # Just --list (show all)
+        elif 'list' in vars(args):  
+            if args.list is None:  
                 list_months(months_dict)
-            else:  # --list 2025-01 (show specific)
+            else:  
                 print(f"displaying summary for {args.list}")
                 if args.list in months_dict:
-                    months_dict[args.list].display_summary()  # NEW: Direct method call
+                    months_dict[args.list].display_summary()
                 else:
                     print(f"No month found for {args.list}")
                 

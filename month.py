@@ -52,16 +52,43 @@ class Month:
         print(f"Added: ${amount:.2f} - {description}")
         self.display_additional_costs()
 
+    def edit_additional_cost(self, number_to_edit):
+        try: 
+            number = int(number_to_edit) 
+        except ValueError:
+            print(f"Invalid entry number: {number_to_edit}")
+            return False
+        
+        if number < 1 or number > len(self.additional_costs):
+            print(f"no entry found for {number}")
+            return False
+
+        index = number - 1
+
+        new_amount_input = input(f"New amount for entry {number_to_edit}: ")
+        try:
+            amount_to_edit = float(new_amount_input)
+        except ValueError:
+            print("Invalid amount entered")
+            return False
+        
+        description_to_edit = input(f"New description for entry {number_to_edit}: ")
+
+        cost_entry = {"amount": amount_to_edit, "description": description_to_edit}
+        self.additional_costs[index] = cost_entry
+        print(f"Updated Entry {number_to_edit}: ${amount_to_edit:.2f} - {description_to_edit}")
+        return True
+
     def delete_additional_cost(self, number_to_delete):
         try: 
             number = int(number_to_delete) 
         except ValueError:
             print(f"Invalid entry number: {number_to_delete}")
-            return
+            return False
         
         if number < 1 or number > len(self.additional_costs):
             print(f"no entry found for {number}")
-            return
+            return False
         
         index = number - 1
         
@@ -69,6 +96,7 @@ class Month:
         self.additional_costs.pop(index)
         print(f"Deleted entry {number}: ${deleted_item['amount']:.2f} - {deleted_item['description']}")
         self.display_additional_costs()
+        return True
 
     def display_additional_costs(self):
         print(f"\n ADDITIONAL COSTS:")

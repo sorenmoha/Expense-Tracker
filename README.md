@@ -25,19 +25,24 @@ This tool helps track monthly expenses like rent, utilities, and additional cost
   ```
   
   ```
-  tracker -d 2025-01                                   #Delete a month entry 
-  tracker --delete-month                               #Delete a month entry
+  tracker -d YYYY-MM                                    #Delete a month entry 
+  tracker --delete-month                                #Delete a month entry
   ```
   
   ```
-  tracker -a                                        #Add additional cost 
+  tracker -a                                           #Add additional cost 
   tracker --add-cost                                   #Add additional cost
   ``` 
 
   ```
-  tracker -dc 2025-01                               #Delete an additional cost for specified month
-  tracker --delete-cost 2025-01                        #Delete an additional cost for specified month
-  ```            
+  tracker -dc YYYY-MM                                  #Delete an additional cost for specified month
+  tracker --delete-cost YYYY-MM                        #Delete an additional cost for specified month
+  ```       
+
+   ```
+  tracker -ec YYYY-MM                                 #Delete an additional cost for specified month
+  tracker --edit-cost YYYY-MM                         #Delete an additional cost for specified month
+  ```        
 
 
 #### Requirements

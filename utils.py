@@ -7,14 +7,12 @@ def create_new_month(month_name = None):
 
     print("Creating new month...")
        
-    # If month_name not provided or is None, ask for it
     if month_name is None:
         month_name = get_month_input()
     else:
-        # Validate the provided month format
         try:
             datetime.datetime.strptime(month_name, "%Y-%m")
-            print(f"Using month: {month_name}")  # Confirm we're using the provided month
+            print(f"Using month: {month_name}")
         except ValueError:
             print("Invalid month format. Please use YYYY-MM format.")
             return None
@@ -32,7 +30,7 @@ def get_month_input():
     while True:
         try:
             month_str = input("Enter month/year (YYYY-MM): ")
-            # validate the format
+            
             date_obj = datetime.datetime.strptime(month_str, "%Y-%m")
             return month_str
         except ValueError:
@@ -64,7 +62,7 @@ def edit_month(month_date, utility_to_edit, months_dict):
         print(f"No month found for {month_date}")
         return
 
-    new_value = get_dollar_input(f"{utility_to_edit}")  # Uses your validation
+    new_value = get_dollar_input(f"{utility_to_edit}")
     month_object = months_dict[month_date]
     setattr(month_object, utility_to_edit, new_value)
     print(f"Updated {utility_to_edit} to ${new_value:.2f}")
@@ -96,10 +94,34 @@ def add_additional_cost_interactive(month_date, months_dict):
     print(f"added: {amount} description: {description}" )
     save_data(months_dict)
 
+def edit_additional_cost_interactive(date_selected, months_dict):
+    try:
+        datetime.datetime.strptime(date_selected, "%Y-%m")
+        print(f"Using month: {date_selected}") 
+    except ValueError:
+        print("Invalid month format. Please use YYYY-MM format.")
+        return
+    
+    if date_selected not in months_dict:
+        print(f"No month found for {date_selected}")
+        return
+
+    if not months_dict[date_selected].additional_costs:
+        print("No additional costs to edit.")
+        return
+    
+    months_dict[date_selected].display_additional_costs()
+    number_to_edit = input("Which additional cost to edit? (Enter #): ")
+
+    if months_dict[date_selected].edit_additional_cost(number_to_edit):
+        save_data(months_dict)
+    
+
+
 def delete_additional_cost_interactive(date_selected, months_dict):
     try:
         datetime.datetime.strptime(date_selected, "%Y-%m")
-        print(f"Using month: {date_selected}")  # Confirm we're using the provided month
+        print(f"Using month: {date_selected}")
     except ValueError:
         print("Invalid month format. Please use YYYY-MM format.")
         return 
@@ -115,10 +137,11 @@ def delete_additional_cost_interactive(date_selected, months_dict):
     months_dict[date_selected].display_additional_costs()
         
     number_to_delete = input("Which additional cost to delete? (Enter #): ")
-    months_dict[date_selected].delete_additional_cost(number_to_delete)
-    save_data(months_dict)
+    if months_dict[date_selected].delete_additional_cost(number_to_delete):
+        save_data(months_dict)
 
     
+
 # IO helpers 
 def save_data(months_dict):
     """Save months_dict to tracker_data.json"""
