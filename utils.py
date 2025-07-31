@@ -23,7 +23,7 @@ def create_new_month(month_name = None):
     water = get_dollar_input("water")
     internet = get_dollar_input("internet")
 
-    new_month = Month(month_name, rent, heating, electric, water, internet, [])
+    new_month = Month(month_name, rent, heating, electric, water, internet, [], [])
     return new_month
  
 def get_month_input():
@@ -93,6 +93,30 @@ def add_additional_cost_interactive(month_date, months_dict):
     months_dict[month_date].add_additional_cost(amount, description)
     print(f"added: {amount} description: {description}" )
     save_data(months_dict)
+    
+def add_payment_cost_interactive(date_selected, months_dict):
+    try:
+        datetime.datetime.strptime(date_selected, "%Y-%m")
+        print(f"Using month: {date_selected}") 
+    except ValueError:
+        print("Invalid month format. Please use YYYY-MM format.")
+        return
+    
+    if date_selected not in months_dict:
+        print(f"No month found for {date_selected}")
+        return
+    
+    # Show current payment summary first
+    months_dict[date_selected].display_payment_summary()
+    
+    payment_amount = get_dollar_input("payment")
+    months_dict[date_selected].add_payment(payment_amount)
+    
+    # Show updated payment summary
+    print("\nUpdated payment summary:")
+    months_dict[date_selected].display_payment_summary()
+    
+    save_data(months_dict)
 
 def edit_additional_cost_interactive(date_selected, months_dict):
     try:
@@ -116,8 +140,6 @@ def edit_additional_cost_interactive(date_selected, months_dict):
     if months_dict[date_selected].edit_additional_cost(number_to_edit):
         save_data(months_dict)
     
-
-
 def delete_additional_cost_interactive(date_selected, months_dict):
     try:
         datetime.datetime.strptime(date_selected, "%Y-%m")
@@ -171,7 +193,8 @@ def months_dict_to_json(months_dict):
             'electric': month_obj.electric,
             'water': month_obj.water,
             'internet': month_obj.internet,
-            'additional_costs': month_obj.additional_costs
+            'additional_costs': month_obj.additional_costs,
+            'payments': month_obj.payments
         }
     return json_data    
 
@@ -187,7 +210,8 @@ def json_to_months_dict(json_data):
             month_data['electric'],
             month_data['water'],
             month_data['internet'],
-            month_data['additional_costs']
+            month_data['additional_costs'],
+            month_data.get('payments', [])  # Fixed: use .get() with parentheses
         )
         months_dict[month_name] = month_obj
     return months_dict

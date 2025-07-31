@@ -2,7 +2,7 @@ import argparse
 import sys
 
 from month import Month
-from utils import create_new_month, list_months, delete_month, edit_month, save_data, load_data, add_additional_cost_interactive, edit_additional_cost_interactive, delete_additional_cost_interactive  
+from utils import create_new_month, list_months, delete_month, edit_month, save_data, load_data, add_additional_cost_interactive, add_payment_cost_interactive, edit_additional_cost_interactive, delete_additional_cost_interactive  
 
 def main():
 
@@ -29,8 +29,10 @@ def main():
   tracker --add-cost                                   Add additional cost 
 
   tracker -dc 2025-01                                  Delete an additional cost for specified month
-  tracker --delete-cost 2025-01                        Delete an additional cost for specified month            
+  tracker --delete-cost 2025-01                        Delete an additional cost for specified month   
   
+  tracker -p 2025-01                                   Add payment for specified month
+  tracker --paid 2025-01                               Add payment for specified month
   """,
         formatter_class = argparse.RawDescriptionHelpFormatter
     )
@@ -51,10 +53,12 @@ def main():
                     help="Amount for the additional cost")
     parser.add_argument("-cd", "--cost-description", metavar="DESCRIPTION",
                     help="Description for the additional cost")
-    parser.add_argument("-dc", "--delete-cost", metavar="2025-01",
+    parser.add_argument("-dc", "--delete-cost", metavar="YYYY-MM",
             help="Delete an additional cost entry for (required) specified date")
-    parser.add_argument("-ec", "--edit-cost", metavar="2025-01",
+    parser.add_argument("-ec", "--edit-cost", metavar="YYYY-MM",
             help="Edit an additional cost entry for (required) specified date")
+    parser.add_argument("-p", "--paid", metavar="YYYY-MM",
+            help="Add amount paid for the month")
     
     # Check if no arguments provided
     if len(sys.argv) == 1:
@@ -64,8 +68,7 @@ def main():
     
     try:
         if args.new_entry:
-
-            if args.new_entry in months_dict:
+            if args.new_entry != "prompt" and args.new_entry in months_dict:
                 print (f"Existing entry detected for {args.new_entry}")
                 return
             else:
@@ -91,6 +94,9 @@ def main():
         # delete additional cost entry within month 
         elif args.delete_cost:
             delete_additional_cost_interactive(args.delete_cost, months_dict)
+            
+        elif args.paid:
+            add_payment_cost_interactive(args.paid, months_dict)
             
         elif 'list' in vars(args):  
             if args.list is None:  
