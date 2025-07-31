@@ -1,152 +1,205 @@
-# web_app.py - Complete Flask app with beautiful spreadsheet frontend
-
 from flask import Flask, request, jsonify, render_template_string
 from flask_cors import CORS
 import datetime
 
-# Import your existing modules
 from month import Month
 from utils import load_data, save_data
 
 app = Flask(__name__)
 CORS(app)
 
-# Complete HTML template with spreadsheet styling
 HTML_TEMPLATE = '''<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Budget Tracker - Spreadsheet View</title>
+    <title>Budget Tracker - Dark Theme</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+        * { 
+            margin: 0; 
+            padding: 0; 
+            box-sizing: border-box; 
+        }
         
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            background: #f8f9fa;
-            color: #212529;
-            font-size: 16px;
-            line-height: 1.5;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background: #0f1419;
+            color: #e6e9ef;
+            font-size: 18px;
+            line-height: 1.6;
         }
 
         .header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 20px;
+            background: #1a1f3a;
+            color: #ffffff;
+            padding: 30px;
             text-align: center;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+            border-bottom: 1px solid #2d3748;
         }
 
         .header h1 { 
-            font-size: 2.5rem; 
-            margin-bottom: 10px; 
+            font-size: 3rem; 
+            margin-bottom: 15px; 
             font-weight: 700;
-        }
-        .header p { 
-            font-size: 1.2rem; 
-            opacity: 0.95; 
-            font-weight: 400;
+            letter-spacing: -0.5px;
         }
 
-        .container { max-width: 1400px; margin: 0 auto; padding: 30px 20px; }
+        .container { 
+            text-align: center;
+            margin: 0 auto; 
+            padding: 30px 30px;
+        }
 
         .actions-bar {
-            background: white;
-            padding: 20px;
+            background: #1e2328;
+            padding: 20px 30px;
             border-radius: 12px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            margin-bottom: 30px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            margin: 0 auto 30px auto;
             display: flex;
             gap: 15px;
             align-items: center;
+            justify-content: center;
             flex-wrap: wrap;
+            border: 1px solid #2d3748;
+            width: fit-content;
         }
 
         .btn {
-            background: #4CAF50;
-            color: white;
+            background: #4ade80;
+            color: #000000;
             border: none;
             padding: 14px 28px;
-            border-radius: 8px;
+            border-radius: 12px;
             cursor: pointer;
             font-size: 16px;
             font-weight: 600;
             transition: all 0.3s ease;
             min-height: 48px;
+            font-family: inherit;
+            box-shadow: 0 2px 8px rgba(74, 222, 128, 0.2);
         }
 
         .btn:hover {
-            background: #45a049;
+            background: #22c55e;
             transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+            box-shadow: 0 6px 20px rgba(74, 222, 128, 0.4);
         }
 
-        .btn-danger { background: #f44336; }
-        .btn-danger:hover { background: #da190b; }
-        .btn-secondary { background: #6c757d; }
-        .btn-secondary:hover { background: #5a6268; }
+        .btn-danger { 
+            background: #ef4444; 
+            color: #ffffff;
+        }
+        .btn-danger:hover { 
+            background: #dc2626;
+            box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4);
+        }
+
+        .btn-secondary { 
+            background: #6b7280; 
+            color: #ffffff;
+        }
+        .btn-secondary:hover { 
+            background: #4b5563;
+            box-shadow: 0 6px 20px rgba(107, 114, 128, 0.4);
+        }
+
+        .btn-info { 
+            background: #06b6d4; 
+            color: #ffffff;
+        }
+        .btn-info:hover { 
+            background: #0891b2;
+            box-shadow: 0 6px 20px rgba(6, 182, 212, 0.4);
+        }
+
         .btn-small { 
-            padding: 8px 16px; 
-            font-size: 14px; 
-            margin: 0 4px;
-            min-height: 36px;
+            padding: 10px 20px; 
+            font-size: 16px; 
+            margin: 0 6px;
+            min-height: 40px;
         }
 
         .spreadsheet-container {
-            background: white;
-            border-radius: 12px;
-            overflow: hidden;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-            border: 1px solid #e0e0e0;
+            display: inline-block;
+            background: #1e2328;
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+            border: 1px solid #2d3748;
+            
         }
 
         .spreadsheet-table {
-            width: 100%;
             border-collapse: collapse;
-            font-family: -apple-system, BlinkMacSystemFont, 'SF Mono', 'Monaco', 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
-            font-size: 15px;
+            font-family: 'JetBrains Mono', 'Fira Code', 'SF Mono', 'Monaco', monospace;
+            font-size: 17px;
+            
         }
 
         .spreadsheet-table th {
-            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-            color: #495057;
-            padding: 16px 14px;
+            background: #2d3748;
+            color: #f7fafc;
+            padding: 20px 18px;
             text-align: left;
             font-weight: 700;
-            font-size: 14px;
+            font-size: 16px;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
-            border-bottom: 2px solid #dee2e6;
-            border-right: 1px solid #dee2e6;
+            letter-spacing: 1px;
+            border-bottom: 2px solid #4a5568;
+            border-right: 1px solid #4a5568;
             position: sticky;
             top: 0;
             z-index: 10;
         }
 
         .spreadsheet-table td {
-            padding: 14px 12px;
-            border-bottom: 1px solid #e9ecef;
-            border-right: 1px solid #e9ecef;
-            font-size: 15px;
+            padding: 18px 16px;
+            border-bottom: 1px solid #2d3748;
+            border-right: 1px solid #2d3748;
+            font-size: 17px;
             white-space: nowrap;
         }
 
-        .spreadsheet-table tbody tr:hover { background: #f8f9fa; }
-        .spreadsheet-table tbody tr:nth-child(even) { background: #fdfdfd; }
-        .month-cell { font-weight: 600; color: #495057; background: #e3f2fd !important; }
-        .currency { text-align: right; font-family: 'Courier New', monospace; font-weight: 500; }
-        .currency.positive { color: #28a745; }
-        .currency.negative { color: #dc3545; }
-        .total-row { background: #fff3cd !important; font-weight: 700; }
-        .actions-cell { text-align: center; }
+        .spreadsheet-table tbody tr:hover { 
+            background: #2d3748; 
+        }
+        .spreadsheet-table tbody tr:nth-child(even) { 
+            background: #1a202c; 
+        }
+
+        .month-cell { 
+            font-weight: 700; 
+            color: #90cdf4; 
+            background: #2a4365 !important; 
+            font-size: 18px;
+        }
+
+        .currency { 
+            text-align: right; 
+            font-family: 'JetBrains Mono', monospace; 
+            font-weight: 600; 
+            font-size: 17px;
+        }
+        .currency.positive { color: #68d391; }
+        .currency.negative { color: #fc8181; }
+        .total-row { 
+            background: #2d4a22 !important; 
+            font-weight: 700; 
+            color: #c6f6d5;
+        }
+        .actions-cell { 
+            text-align: center; 
+            padding: 18px 30px !important;
+        }
 
         .month-cell:hover {
-            background: #bbdefb !important;
+            background: #3182ce !important;
             cursor: pointer;
             text-decoration: underline;
         }
 
-        .summary-modal {
+        .summary-modal, .form-modal {
             display: none;
             position: fixed;
             z-index: 1000;
@@ -154,428 +207,328 @@ HTML_TEMPLATE = '''<!DOCTYPE html>
             top: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0,0,0,0.5);
-            backdrop-filter: blur(5px);
+            background: rgba(0,0,0,0.8);
+            backdrop-filter: blur(8px);
+            overflow-y: auto;
         }
 
-        .summary-content {
-            background: white;
+        .summary-content, .modal-content {
+            background: #1e2328;
             margin: 2% auto;
             padding: 0;
-            border-radius: 15px;
+            border-radius: 20px;
             width: 90%;
-            max-width: 800px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-            animation: modalSlideIn 0.3s ease;
+            max-width: 900px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+            border: 1px solid #2d3748;
             max-height: 90vh;
             overflow-y: auto;
         }
 
-        .summary-header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 20px;
-            border-radius: 15px 15px 0 0;
-            text-align: center;
+        .modal-content {
+            padding: 40px;
+            max-width: 700px;
         }
 
-        .summary-body {
+        .summary-header {
+            background: linear-gradient(135deg, #1a365d 0%, #2c5282 100%);
+            color: #ffffff;
             padding: 30px;
-            font-family: -apple-system, BlinkMacSystemFont, 'SF Mono', 'Monaco', 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
-            line-height: 1.6;
-            font-size: 16px;
+            border-radius: 20px 20px 0 0;
+            text-align: center;
+        }
+        
+        .summary-body {
+            padding: 40px;
+            font-family: 'Open Sans', Arial, sans-serif;
+            line-height: 1.8;
+            font-size: 18px;
         }
 
         .summary-section {
-            margin-bottom: 25px;
-            padding: 20px;
-            background: #f8f9fa;
-            border-radius: 8px;
-            border-left: 4px solid #667eea;
+            margin-bottom: 30px;
+            padding: 25px;
+            background: #2d3748;
+            border-radius: 12px;
+            border-left: 5px solid #4299e1;
         }
 
         .summary-section h3 {
-            color: #495057;
-            margin-bottom: 15px;
-            font-family: 'Segoe UI', sans-serif;
+            color: #f7fafc;
+            margin-bottom: 20px;
+            font-family: 'Inter', sans-serif;
             text-transform: uppercase;
-            letter-spacing: 1px;
-            font-size: 14px;
+            letter-spacing: 1.5px;
+            font-size: 16px;
+            font-weight: 700;
         }
 
         .cost-line {
             display: flex;
             justify-content: space-between;
-            padding: 8px 0;
-            border-bottom: 1px dotted #dee2e6;
+            padding: 12px 0;
+            border-bottom: 1px dotted #4a5568;
+            font-size: 18px;
         }
 
         .cost-line:last-child {
             border-bottom: none;
             font-weight: bold;
-            margin-top: 10px;
-            padding-top: 15px;
-            border-top: 2px solid #667eea;
+            margin-top: 15px;
+            padding-top: 20px;
+            border-top: 2px solid #4299e1;
         }
 
         .additional-costs-table {
             width: 100%;
             border-collapse: collapse;
-            margin: 15px 0;
+            margin: 20px 0;
+            font-size: 18px;
         }
 
         .additional-costs-table th {
-            background: #e9ecef;
-            padding: 10px;
+            background: #2d3748;
+            padding: 18px;
             text-align: left;
-            font-weight: 600;
-            border: 1px solid #dee2e6;
+            font-weight: 700;
+            border: 1px solid #4a5568;
+            font-size: 18px;
+            color: #f7fafc;
         }
 
         .additional-costs-table td {
-            padding: 10px;
-            border: 1px solid #dee2e6;
+            padding: 18px;
+            border: 1px solid #4a5568;
+            font-size: 18px;
+            vertical-align: middle;
+            background: #1e2328;
         }
 
         .grand-total {
-            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
-            color: white;
-            padding: 20px;
-            border-radius: 8px;
-            text-align: center;
-            font-size: 18px;
-            font-weight: bold;
-            margin-top: 20px;
-        }
-
-        .console-container {
-            background: #1e1e1e;
+            background: linear-gradient(135deg, #2f855a 0%, #38a169 100%);
+            color: #ffffff;
+            padding: 25px;
             border-radius: 12px;
-            margin-bottom: 30px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
-            font-family: -apple-system, BlinkMacSystemFont, 'SF Mono', 'Monaco', 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
-            color: #d4d4d4;
-            border: 1px solid #333;
-        }
-
-        .console-header {
-            background: #2d2d30;
-            padding: 12px 20px;
-            border-radius: 12px 12px 0 0;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid #333;
-        }
-
-        .console-header h3 {
-            margin: 0;
-            font-size: 14px;
-            font-weight: 600;
-            color: #d4d4d4;
-        }
-
-        .console-close {
-            background: none;
-            border: none;
-            color: #d4d4d4;
-            font-size: 18px;
-            cursor: pointer;
-            padding: 0;
-            width: 24px;
-            height: 24px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 4px;
-        }
-
-        .console-close:hover {
-            background: #404040;
-        }
-
-        .console-output {
-            height: 300px;
-            overflow-y: auto;
-            padding: 16px 20px;
-            font-size: 14px;
-            line-height: 1.4;
-            background: #1e1e1e;
-        }
-
-        .console-line {
-            margin-bottom: 4px;
-            white-space: pre-wrap;
-            word-wrap: break-word;
-        }
-
-        .console-line.command {
-            color: #569cd6;
-        }
-
-        .console-line.success {
-            color: #4ec9b0;
-        }
-
-        .console-line.error {
-            color: #f44747;
-        }
-
-        .console-line.info {
-            color: #dcdcaa;
-        }
-
-        .console-input-container {
-            display: flex;
-            align-items: center;
-            padding: 12px 20px;
-            background: #2d2d30;
-            border-radius: 0 0 12px 12px;
-            border-top: 1px solid #333;
-        }
-
-        .console-prompt {
-            color: #4ec9b0;
-            font-weight: 600;
-            margin-right: 8px;
-            font-size: 14px;
-        }
-
-        .console-input {
-            flex: 1;
-            background: transparent;
-            border: none;
-            color: #d4d4d4;
-            font-family: inherit;
-            font-size: 14px;
-            outline: none;
-        }
-
-        .console-input::placeholder {
-            color: #6a6a6a;
+            text-align: center;
+            font-size: 22px;
+            font-weight: bold;
+            margin-top: 25px;
         }
 
         .message {
-            padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            font-weight: 500;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+            font-weight: 600;
+            font-size: 18px;
         }
-        .message.success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
-        .message.error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
-
-        .form-modal {
-            display: none;
-            position: fixed;
-            z-index: 1000;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.5);
-            backdrop-filter: blur(5px);
+        
+        .message.success { 
+            background: #2f855a; 
+            color: #ffffff; 
+            border: 1px solid #38a169; 
         }
-
-        .modal-content {
-            background: white;
-            margin: 5% auto;
-            padding: 30px;
-            border-radius: 15px;
-            width: 90%;
-            max-width: 600px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        
+        .message.error { 
+            background: #e53e3e; 
+            color: #ffffff; 
+            border: 1px solid #c53030; 
         }
 
         .form-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 20px;
-            margin: 20px 0;
+            gap: 25px;
+            margin: 25px 0;
         }
 
-        .form-group { display: flex; flex-direction: column; }
-        .form-group label { font-weight: 600; margin-bottom: 8px; color: #495057; }
-        .form-group input {
-            padding: 14px;
-            border: 2px solid #e9ecef;
-            border-radius: 8px;
-            font-size: 16px;
-            transition: border-color 0.3s ease;
+        .form-group { 
+            display: flex; 
+            flex-direction: column; 
         }
+        
+        .form-group label { 
+            font-weight: 700; 
+            margin-bottom: 12px; 
+            color: #f7fafc; 
+            font-size: 18px;
+        }
+        
+        .form-group input {
+            padding: 18px;
+            border: 2px solid #4a5568;
+            border-radius: 12px;
+            font-size: 20px;
+            transition: all 0.3s ease;
+            min-height: 60px;
+            background: #2d3748;
+            color: #e2e8f0;
+            font-family: inherit;
+        }
+        
         .form-group input:focus {
             outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            border-color: #4299e1;
+            box-shadow: 0 0 0 4px rgba(66, 153, 225, 0.2);
+            background: #1a202c;
+        }
+
+        .form-group input::placeholder {
+            color: #a0aec0;
         }
 
         .close {
-            color: #aaa;
+            color: #a0aec0;
             float: right;
-            font-size: 28px;
+            font-size: 32px;
             font-weight: bold;
             cursor: pointer;
             line-height: 1;
         }
-        .close:hover { color: #333; }
+        .close:hover { color: #ffffff; }
 
-        .loading { text-align: center; padding: 40px; color: #6c757d; }
-        .spinner {
-            border: 3px solid #f3f3f3;
-            border-top: 3px solid #667eea;
-            border-radius: 50%;
-            width: 30px;
-            height: 30px;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 20px;
+        .loading { 
+            text-align: center; 
+            padding: 60px; 
+            color: #a0aec0; 
         }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .spinner {
+            border: 4px solid #2d3748;
+            border-top: 4px solid #4299e1;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 25px;
+        }
+        @keyframes spin { 
+            0% { transform: rotate(0deg); } 
+            100% { transform: rotate(360deg); } 
+        }
 
-        .empty-state { text-align: center; padding: 60px 20px; color: #6c757d; }
-        .empty-state h3 { margin-bottom: 10px; color: #495057; }
+        .empty-state { 
+            text-align: center; 
+            padding: 80px 30px; 
+            color: #a0aec0; 
+        }
+        .empty-state h3 { 
+            margin-bottom: 15px; 
+            color: #e2e8f0; 
+            font-size: 24px;
+        }
+        .empty-state p {
+            font-size: 18px;
+        }
+
+        h2 {
+            color: #f7fafc;
+            font-size: 28px;
+            margin-bottom: 20px;
+        }
+
+        h3 {
+            color: #f7fafc;
+            font-size: 22px;
+            margin-bottom: 15px;
+        }
 
         @media (max-width: 768px) {
             .container {
-                padding: 20px 10px;
+                padding: 30px 20px;
             }
             
             .header h1 {
-                font-size: 2rem;
-            }
-            
-            .header p {
-                font-size: 1rem;
+                font-size: 2.5rem;
             }
             
             .actions-bar {
                 flex-direction: column;
                 align-items: stretch;
-                gap: 10px;
-            }
-            
-            .console-container {
-                margin-bottom: 20px;
-            }
-            
-            .console-output {
-                height: 200px;
-                padding: 12px 16px;
-                font-size: 13px;
-            }
-            
-            .console-input-container {
-                padding: 10px 16px;
-            }
-            
-            .console-prompt,
-            .console-input {
-                font-size: 13px;
+                gap: 15px;
             }
             
             .btn {
                 width: 100%;
                 justify-content: center;
-                padding: 16px 20px;
-                font-size: 16px;
+                padding: 18px 25px;
+                font-size: 18px;
             }
             
             .spreadsheet-container {
                 overflow-x: auto;
-                border-radius: 8px;
+                border-radius: 12px;
                 -webkit-overflow-scrolling: touch;
             }
             
             .spreadsheet-table {
-                min-width: 1000px;
-                font-size: 14px;
+                min-width: 1200px;
+                font-size: 16px;
             }
             
             .spreadsheet-table th {
-                padding: 12px 8px;
-                font-size: 12px;
-                white-space: nowrap;
+                padding: 16px 12px;
+                font-size: 14px;
             }
             
             .spreadsheet-table td {
-                padding: 12px 8px;
-                font-size: 14px;
-            }
-            
-            .currency {
-                font-size: 14px;
-            }
-            
-            .month-cell {
-                font-size: 14px;
-                min-width: 80px;
-            }
-            
-            .btn-small {
-                padding: 8px 12px;
-                font-size: 13px;
-                white-space: nowrap;
+                padding: 16px 12px;
+                font-size: 16px;
             }
             
             .form-grid {
                 grid-template-columns: 1fr;
-                gap: 15px;
+                gap: 20px;
             }
             
             .modal-content {
-                margin: 10% auto;
-                padding: 20px;
-                width: 95%;
-            }
-            
-            .summary-content {
                 margin: 5% auto;
+                padding: 30px;
                 width: 95%;
                 max-height: 85vh;
             }
             
-            .summary-body {
-                padding: 20px;
-                font-size: 15px;
+            .form-group input {
+                padding: 16px;
+                font-size: 18px;
+                min-height: 55px;
             }
             
             .additional-costs-table {
-                font-size: 14px;
+                font-size: 16px;
             }
             
             .additional-costs-table th,
             .additional-costs-table td {
-                padding: 8px 6px;
+                padding: 14px 10px;
+                font-size: 16px;
             }
         }
 
         @media (max-width: 480px) {
             .spreadsheet-table {
-                font-size: 13px;
+                font-size: 15px;
             }
             
             .spreadsheet-table th {
-                padding: 10px 6px;
-                font-size: 11px;
+                padding: 14px 8px;
+                font-size: 13px;
             }
             
             .spreadsheet-table td {
-                padding: 10px 6px;
-                font-size: 13px;
-            }
-            
-            .currency {
-                font-size: 13px;
+                padding: 14px 8px;
+                font-size: 15px;
             }
             
             .btn-small {
-                padding: 6px 10px;
-                font-size: 12px;
+                padding: 8px 16px;
+                font-size: 14px;
             }
         }
     </style>
 </head>
 <body>
     <div class="header">
-        <h1>expense tracker</h1>
+        <h1>Expense Tracker</h1>
     </div>
 
     <div class="container">
@@ -583,21 +536,6 @@ HTML_TEMPLATE = '''<!DOCTYPE html>
             <button class="btn" onclick="openModal()">Add New Month</button>
             <button class="btn btn-secondary" onclick="loadMonths()">Refresh Data</button>
             <button class="btn btn-secondary" onclick="exportData()">Export CSV</button>
-            <button class="btn btn-secondary" onclick="toggleConsole()">Toggle Console</button>
-        </div>
-
-        <div id="console-container" class="console-container" style="display: none;">
-            <div class="console-header">
-                <h3>CLI Console</h3>
-                <button class="console-close" onclick="toggleConsole()">&times;</button>
-            </div>
-            <div class="console-output" id="consoleOutput">
-                <div class="console-line">Budget Tracker CLI Console - Type 'help' for available commands</div>
-            </div>
-            <div class="console-input-container">
-                <span class="console-prompt">tracker$ </span>
-                <input type="text" id="consoleInput" class="console-input" placeholder="Enter CLI command..." autocomplete="off">
-            </div>
         </div>
 
         <div id="message"></div>
@@ -617,12 +555,13 @@ HTML_TEMPLATE = '''<!DOCTYPE html>
                         <th>Electric</th>
                         <th>Water</th>
                         <th>Internet</th>
-                        <th>Additional Costs</th>
-                        <th>Total Utilities</th>
+                        <th>Addtl. Costs</th>
+                        <th>All Utilities</th>
                         <th>Your Share</th>
                         <th>Housing Total</th>
-                        <th>Additional Costs</th>
                         <th>Monthly Total</th>
+                        <th>Paid</th>
+                        <th>Owed</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
@@ -636,20 +575,16 @@ HTML_TEMPLATE = '''<!DOCTYPE html>
         </div>
     </div>
 
-    <!-- Modal for month summary -->
     <div id="summaryModal" class="summary-modal">
         <div class="summary-content">
             <div class="summary-header">
-                <span class="close" onclick="closeSummaryModal()" style="float: right; font-size: 24px; cursor: pointer;">&times;</span>
+                <span class="close" onclick="closeSummaryModal()" style="float: right; font-size: 28px; cursor: pointer;">&times;</span>
                 <h2 id="summaryTitle">Month Summary</h2>
             </div>
-            <div class="summary-body" id="summaryBody">
-                <!-- Summary content will be populated here -->
-            </div>
+            <div class="summary-body" id="summaryBody"></div>
         </div>
     </div>
 
-    <!-- Modal for adding new month -->
     <div id="monthModal" class="form-modal">
         <div class="modal-content">
             <span class="close" onclick="closeModal()">&times;</span>
@@ -681,9 +616,99 @@ HTML_TEMPLATE = '''<!DOCTYPE html>
                         <input type="number" id="internet" step="0.01" placeholder="60.00" required>
                     </div>
                 </div>
-                <div style="text-align: center; margin-top: 30px;">
+                <div style="text-align: center; margin-top: 35px;">
                     <button type="submit" class="btn">Create Month</button>
-                    <button type="button" class="btn btn-secondary" onclick="closeModal()" style="margin-left: 10px;">Cancel</button>
+                    <button type="button" class="btn btn-secondary" onclick="closeModal()" style="margin-left: 15px;">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="editModal" class="form-modal">
+        <div class="modal-content" style="max-width: 1000px;">
+            <span class="close" onclick="closeEditModal()">&times;</span>
+            <h2>Edit Month: <span id="editMonthName"></span></h2>
+            
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="editRent">Rent ($)</label>
+                    <input type="number" id="editRent" step="0.01" required>
+                </div>
+                <div class="form-group">
+                    <label for="editHeating">Heating ($)</label>
+                    <input type="number" id="editHeating" step="0.01" required>
+                </div>
+                <div class="form-group">
+                    <label for="editElectric">Electric ($)</label>
+                    <input type="number" id="editElectric" step="0.01" required>
+                </div>
+                <div class="form-group">
+                    <label for="editWater">Water ($)</label>
+                    <input type="number" id="editWater" step="0.01" required>
+                </div>
+                <div class="form-group">
+                    <label for="editInternet">Internet ($)</label>
+                    <input type="number" id="editInternet" step="0.01" required>
+                </div>
+            </div>
+
+            <div style="margin-top: 35px;">
+                <h3>Additional Costs</h3>
+                <button type="button" class="btn btn-secondary" onclick="openAddCostModal()" style="margin-bottom: 20px;">Add Additional Cost</button>
+                
+                <table class="additional-costs-table">
+                    <thead>
+                        <tr>
+                            <th>Amount</th>
+                            <th>Description</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="additionalCostsTableBody"></tbody>
+                </table>
+            </div>
+            
+            <div style="text-align: center; margin-top: 35px;">
+                <button type="button" class="btn" onclick="saveMonthChanges()">Save Basic Info</button>
+                <button type="button" class="btn btn-secondary" onclick="closeEditModal()" style="margin-left: 15px;">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="addCostModal" class="form-modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeAddCostModal()">&times;</span>
+            <h2>Add Additional Cost</h2>
+            <form id="addCostForm">
+                <div class="form-group">
+                    <label for="costAmount">Amount ($)</label>
+                    <input type="number" id="costAmount" step="0.01" placeholder="50.00" required>
+                </div>
+                <div class="form-group">
+                    <label for="costDescription">Description</label>
+                    <input type="text" id="costDescription" placeholder="Grocery, Gas, etc." required>
+                </div>
+                <div style="text-align: center; margin-top: 35px;">
+                    <button type="submit" class="btn">Add Cost</button>
+                    <button type="button" class="btn btn-secondary" onclick="closeAddCostModal()" style="margin-left: 15px;">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="paymentModal" class="form-modal">
+        <div class="modal-content">
+            <span class="close" onclick="closePaymentModal()">&times;</span>
+            <h2>Add Payment for <span id="paymentMonthName"></span></h2>
+            <div id="currentPaymentSummary" style="margin-bottom: 25px; padding: 20px; background: #2d3748; border-radius: 12px;"></div>
+            <form id="paymentForm">
+                <div class="form-group">
+                    <label for="paymentAmount">Payment Amount ($)</label>
+                    <input type="number" id="paymentAmount" step="0.01" placeholder="500.00" required>
+                </div>
+                <div style="text-align: center; margin-top: 35px;">
+                    <button type="submit" class="btn">Add Payment</button>
+                    <button type="button" class="btn btn-secondary" onclick="closePaymentModal()" style="margin-left: 15px;">Cancel</button>
                 </div>
             </form>
         </div>
@@ -691,73 +716,13 @@ HTML_TEMPLATE = '''<!DOCTYPE html>
 
     <script>
         let budgetData = [];
-        let consoleHistory = [];
-        let historyIndex = -1;
+        let currentEditingMonth = null;
+        let currentPaymentMonth = null;
 
-        function toggleConsole() {
-            const console = document.getElementById('console-container');
-            const isVisible = console.style.display !== 'none';
-            console.style.display = isVisible ? 'none' : 'block';
-            
-            if (!isVisible) {
-                document.getElementById('consoleInput').focus();
-            }
-        }
-
-        function addConsoleOutput(text, type = 'info') {
-            const output = document.getElementById('consoleOutput');
-            const line = document.createElement('div');
-            line.className = `console-line ${type}`;
-            line.textContent = text;
-            output.appendChild(line);
-            output.scrollTop = output.scrollHeight;
-        }
-
-        async function executeCliCommand(command) {
-            if (!command.trim()) return;
-            
-            // Add command to history
-            consoleHistory.unshift(command);
-            historyIndex = -1;
-            
-            // Display the command
-            addConsoleOutput(`tracker$ ${command}`, 'command');
-            
-            try {
-                const response = await fetch('/api/cli', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ command: command.trim() })
-                });
-                
-                const result = await response.json();
-                
-                if (response.ok) {
-                    // Handle successful command
-                    if (result.output) {
-                        result.output.split('\\n').forEach(line => {
-                            if (line.trim()) {
-                                addConsoleOutput(line, result.success ? 'success' : 'info');
-                            }
-                        });
-                    }
-                    
-                    // Refresh data if command modified anything
-                    if (result.refresh_needed) {
-                        loadMonths();
-                    }
-                } else {
-                    addConsoleOutput(`Error: ${result.error}`, 'error');
-                }
-            } catch (error) {
-                addConsoleOutput(`Network error: ${error.message}`, 'error');
-            }
-        }
-
-        function showMessage(text, isError = false) {
+        function showMessage(msg, isError = false) {
             const messageDiv = document.getElementById('message');
-            messageDiv.innerHTML = `<div class="message ${isError ? 'error' : 'success'}">${text}</div>`;
-            setTimeout(() => messageDiv.innerHTML = '', 5000);
+            messageDiv.innerHTML = `<div class="message ${isError ? 'error' : 'success'}">${msg}</div>`;
+            setTimeout(() => messageDiv.innerHTML = '', 3000);
         }
 
         function formatCurrency(amount) {
@@ -777,10 +742,77 @@ HTML_TEMPLATE = '''<!DOCTYPE html>
             document.getElementById('monthModal').style.display = 'none';
             document.getElementById('monthForm').reset();
         }
+        
+        function closeEditModal() {
+            document.getElementById('editModal').style.display = 'none';
+            currentEditingMonth = null;
+        }
+
+        function openAddCostModal() {
+            document.getElementById('addCostModal').style.display = 'block';
+            document.getElementById('costAmount').value = '';
+            document.getElementById('costDescription').value = '';
+            document.getElementById('costAmount').focus();
+        }
+
+        function closeAddCostModal() {
+            document.getElementById('addCostModal').style.display = 'none';
+        }
+
+        function openPaymentModal(monthName) {
+            currentPaymentMonth = monthName;
+            document.getElementById('paymentMonthName').textContent = monthName;
+            document.getElementById('paymentModal').style.display = 'block';
+            document.getElementById('paymentAmount').value = '';
+            loadPaymentSummary(monthName);
+            document.getElementById('paymentAmount').focus();
+        }
+
+        function closePaymentModal() {
+            document.getElementById('paymentModal').style.display = 'none';
+            currentPaymentMonth = null;
+        }
+
+        async function loadPaymentSummary(monthName) {
+            try {
+                const response = await fetch(`/api/months/${monthName}`);
+                const month = await response.json();
+                
+                const totalPaid = month.payments ? month.payments.reduce((sum, p) => sum + p, 0) : 0;
+                const owed = month.total_month_due - totalPaid;
+                
+                document.getElementById('currentPaymentSummary').innerHTML = `
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                        <span>Total Month Due:</span>
+                        <span>${formatCurrency(month.total_month_due)}</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                        <span>Total Paid:</span>
+                        <span>${formatCurrency(totalPaid)}</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; font-weight: bold; color: ${owed > 0 ? '#fc8181' : '#68d391'};">
+                        <span>Amount Owed:</span>
+                        <span>${formatCurrency(owed)}</span>
+                    </div>
+                `;
+            } catch (error) {
+                console.error('Error loading payment summary:', error);
+            }
+        }
+
+        async function addPayment(monthName) {
+            openPaymentModal(monthName);
+        }
 
         window.onclick = function(event) {
             const modal = document.getElementById('monthModal');
+            const editModal = document.getElementById('editModal');
+            const addCostModal = document.getElementById('addCostModal');
+            const paymentModal = document.getElementById('paymentModal');
             if (event.target === modal) closeModal();
+            if (event.target === editModal) closeEditModal();
+            if (event.target === addCostModal) closeAddCostModal();
+            if (event.target === paymentModal) closePaymentModal();
         }
 
         async function loadMonths() {
@@ -827,7 +859,11 @@ HTML_TEMPLATE = '''<!DOCTYPE html>
             
             months.sort((a, b) => b.month_name.localeCompare(a.month_name));
             
-            tbody.innerHTML = months.map(month => `
+            tbody.innerHTML = months.map(month => {
+                const totalPaid = month.payments ? month.payments.reduce((sum, payment) => sum + payment, 0) : 0;
+                const owed = month.total_month_due - totalPaid;
+                
+                return `
                 <tr>
                     <td class="month-cell" onclick="showMonthSummary('${month.month_name}')" title="Click to view detailed summary">${month.month_name}</td>
                     <td class="currency">${formatCurrency(month.rent)}</td>
@@ -840,30 +876,14 @@ HTML_TEMPLATE = '''<!DOCTYPE html>
                     <td class="currency positive">${formatCurrency(month.utilities_per_roommate)}</td>
                     <td class="currency positive">${formatCurrency(month.total_housing)}</td>
                     <td class="currency total-row">${formatCurrency(month.total_month_due)}</td>
+                    <td class="currency ${totalPaid > 0 ? 'positive' : ''}" onclick="addPayment('${month.month_name}')" style="cursor: pointer;" title="Click to add payment">${formatCurrency(totalPaid)}</td>
+                    <td class="currency ${owed > 0 ? 'negative' : 'positive'}">${formatCurrency(owed)}</td>
                     <td class="actions-cell">
-                        <button class="btn btn-small btn-danger" onclick="deleteMonth('${month.month_name}')">Delete</button>
+                        <button class="btn btn-small btn-info" onclick="editMonth('${month.month_name}')">Edit</button>
                     </td>
                 </tr>
-            `).join('');
-        }
-
-        function calculateTotals(months) {
-            return months.reduce((totals, month) => ({
-                rent: totals.rent + month.rent,
-                heating: totals.heating + month.heating,
-                electric: totals.electric + month.electric,
-                water: totals.water + month.water,
-                internet: totals.internet + month.internet,
-                total_utilities: totals.total_utilities + month.total_utilities,
-                utilities_per_roommate: totals.utilities_per_roommate + month.utilities_per_roommate,
-                total_housing: totals.total_housing + month.total_housing,
-                total_additional_costs: totals.total_additional_costs + month.total_additional_costs,
-                total_month_due: totals.total_month_due + month.total_month_due
-            }), {
-                rent: 0, heating: 0, electric: 0, water: 0, internet: 0,
-                total_utilities: 0, utilities_per_roommate: 0, total_housing: 0,
-                total_additional_costs: 0, total_month_due: 0
-            });
+            `;
+            }).join('');
         }
 
         async function showMonthSummary(monthName) {
@@ -881,7 +901,6 @@ HTML_TEMPLATE = '''<!DOCTYPE html>
                         <table class="additional-costs-table">
                             <thead>
                                 <tr>
-                                    <th>#</th>
                                     <th>Amount</th>
                                     <th>Description</th>
                                 </tr>
@@ -889,7 +908,6 @@ HTML_TEMPLATE = '''<!DOCTYPE html>
                             <tbody>
                                 ${month.additional_costs.map((cost, index) => `
                                     <tr>
-                                        <td>${index + 1}</td>
                                         <td>${formatCurrency(cost.amount)}</td>
                                         <td>${cost.description}</td>
                                     </tr>
@@ -902,7 +920,7 @@ HTML_TEMPLATE = '''<!DOCTYPE html>
                         </div>
                     `;
                 } else {
-                    additionalCostsHtml = '<p style="color: #6c757d; font-style: italic;">No additional costs stored</p>';
+                    additionalCostsHtml = '<p style="color: #a0aec0; font-style: italic;">No additional costs stored</p>';
                 }
 
                 const summaryHtml = `
@@ -951,8 +969,38 @@ HTML_TEMPLATE = '''<!DOCTYPE html>
                         ${additionalCostsHtml}
                     </div>
 
+                    <div class="summary-section">
+                        <h3>Payments</h3>
+                        ${month.payments && month.payments.length > 0 ? `
+                            <table class="additional-costs-table">
+                                <thead>
+                                    <tr>
+                                        <th>Payment #</th>
+                                        <th>Amount</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${month.payments.map((payment, index) => `
+                                        <tr>
+                                            <td>Payment ${index + 1}</td>
+                                            <td>${formatCurrency(payment)}</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                            <div class="cost-line">
+                                <span>TOTAL PAID:</span>
+                                <span>${formatCurrency(month.payments.reduce((sum, p) => sum + p, 0))}</span>
+                            </div>
+                        ` : '<p style="color: #a0aec0; font-style: italic;">No payments recorded</p>'}
+                    </div>
+
                     <div class="grand-total">
                         TOTAL MONTH DUE: ${formatCurrency(month.total_month_due)}
+                    </div>
+                    
+                    <div class="grand-total" style="background: linear-gradient(135deg, ${(month.total_month_due - (month.payments ? month.payments.reduce((sum, p) => sum + p, 0) : 0)) > 0 ? '#e53e3e, #c53030' : '#2f855a, #38a169'});">
+                        AMOUNT OWED: ${formatCurrency(month.total_month_due - (month.payments ? month.payments.reduce((sum, p) => sum + p, 0) : 0))}
                     </div>
                 `;
 
@@ -999,21 +1047,221 @@ HTML_TEMPLATE = '''<!DOCTYPE html>
                 showMessage('Network error: ' + error.message, true);
             }
         }
+        
+        async function editMonth(monthName) {
+            try {
+                const response = await fetch(`/api/months/${monthName}`);
+                if (!response.ok) {
+                    throw new Error('Failed to load month data');
+                }
+                
+                const monthData = await response.json();
+                currentEditingMonth = monthName;
+                
+                document.getElementById('editMonthName').textContent = monthName;
+                document.getElementById('editRent').value = monthData.rent;
+                document.getElementById('editHeating').value = monthData.heating;
+                document.getElementById('editElectric').value = monthData.electric;
+                document.getElementById('editWater').value = monthData.water;
+                document.getElementById('editInternet').value = monthData.internet;
+                
+                renderAdditionalCostsTable(monthData.additional_costs || []);
+                
+                document.getElementById('editModal').style.display = 'block';
+                
+            } catch (error) {
+                showMessage('Error loading month data: ' + error.message, true);
+            }
+        }
+        
+        function renderAdditionalCostsTable(additionalCosts) {
+            const tbody = document.getElementById('additionalCostsTableBody');
+            
+            if (additionalCosts.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="3" style="text-align: center; color: #a0aec0; font-style: italic;">No additional costs yet</td></tr>';
+                return;
+            }
+            
+            tbody.innerHTML = additionalCosts.map((cost, index) => `
+                <tr>
+                    <td class="currency">${formatCurrency(cost.amount)}</td>
+                    <td>${cost.description}</td>
+                    <td class="actions-cell">
+                        <button class="btn btn-small btn-secondary" onclick="editAdditionalCost(${index})">Edit</button>
+                        <button class="btn btn-small btn-danger" onclick="deleteAdditionalCost(${index})">Delete</button>
+                    </td>
+                </tr>
+            `).join('');
+            
+            const total = additionalCosts.reduce((sum, cost) => sum + (parseFloat(cost.amount) || 0), 0);
+            tbody.innerHTML += `
+                <tr class="total-row">
+                    <td class="currency"><strong>${formatCurrency(total)}</strong></td>
+                    <td><strong>Total</strong></td>
+                    <td></td>
+                </tr>
+            `;
+        }
 
-        async function deleteMonth(monthName) {
-            if (!confirm(`Are you sure you want to delete ${monthName}?\\n\\nThis action cannot be undone.`)) return;
+        async function editAdditionalCost(index) {
+            if (!currentEditingMonth) return;
+            
+            const monthData = await fetch(`/api/months/${currentEditingMonth}`).then(r => r.json());
+            const cost = monthData.additional_costs[index];
+            
+            const newAmount = prompt('Enter new amount:', cost.amount);
+            if (newAmount === null) return;
+            
+            const newDescription = prompt('Enter new description:', cost.description);
+            if (newDescription === null) return;
+            
+            const amount = parseFloat(newAmount);
+            if (isNaN(amount) || amount <= 0) {
+                showMessage('Please enter a valid amount', true);
+                return;
+            }
+            
+            if (!newDescription.trim()) {
+                showMessage('Description cannot be empty', true);
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/months/${currentEditingMonth}/additional-costs/${index}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ amount, description: newDescription.trim() })
+                });
+
+                if (response.ok) {
+                    showMessage('Additional cost updated successfully!');
+                    await loadMonths();
+                    editMonth(currentEditingMonth);
+                } else {
+                    const error = await response.json();
+                    showMessage(error.error || 'Error updating cost', true);
+                }
+            } catch (error) {
+                showMessage('Network error: ' + error.message, true);
+            }
+        }
+
+        async function saveMonthChanges() {
+            if (!currentEditingMonth) return;
+            
+            const data = {
+                rent: parseFloat(document.getElementById('editRent').value) || 0,
+                heating: parseFloat(document.getElementById('editHeating').value) || 0,
+                electric: parseFloat(document.getElementById('editElectric').value) || 0,
+                water: parseFloat(document.getElementById('editWater').value) || 0,
+                internet: parseFloat(document.getElementById('editInternet').value) || 0
+            };
 
             try {
-                const response = await fetch(`/api/months/${monthName}`, {
+                const response = await fetch(`/api/months/${currentEditingMonth}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                if (response.ok) {
+                    showMessage(`Month ${currentEditingMonth} updated successfully!`);
+                    closeEditModal();
+                    loadMonths();
+                } else {
+                    const error = await response.json();
+                    showMessage(error.error || 'Error updating month', true);
+                }
+            } catch (error) {
+                showMessage('Network error: ' + error.message, true);
+            }
+        }
+
+        async function addAdditionalCost(event) {
+            event.preventDefault();
+            
+            if (!currentEditingMonth) return;
+            
+            const amount = parseFloat(document.getElementById('costAmount').value);
+            const description = document.getElementById('costDescription').value.trim();
+            
+            if (!amount || !description) {
+                showMessage('Please fill in both amount and description', true);
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/months/${currentEditingMonth}/additional-costs`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ amount, description })
+                });
+
+                if (response.ok) {
+                    showMessage('Additional cost added successfully!');
+                    closeAddCostModal();
+                    const updatedMonth = await fetch(`/api/months/${currentEditingMonth}`).then(r => r.json());
+                    renderAdditionalCostsTable(updatedMonth.additional_costs || []);
+                    await loadMonths();
+                } else {
+                    const error = await response.json();
+                    showMessage(error.error || 'Error adding cost', true);
+                }
+            } catch (error) {
+                showMessage('Network error: ' + error.message, true);
+            }
+        }
+
+        async function deleteAdditionalCost(index) {
+            if (!currentEditingMonth) return;
+            
+            if (!confirm('Are you sure you want to delete this additional cost?')) return;
+            
+            try {
+                const response = await fetch(`/api/months/${currentEditingMonth}/additional-costs/${index}`, {
                     method: 'DELETE'
                 });
 
                 if (response.ok) {
-                    showMessage(`Month ${monthName} deleted successfully!`);
-                    loadMonths();
+                    showMessage('Additional cost deleted successfully!');
+                    const updatedMonth = await fetch(`/api/months/${currentEditingMonth}`).then(r => r.json());
+                    renderAdditionalCostsTable(updatedMonth.additional_costs || []);
+                    await loadMonths();
                 } else {
                     const error = await response.json();
-                    showMessage(error.error || 'Error deleting month', true);
+                    showMessage(error.error || 'Error deleting cost', true);
+                }
+            } catch (error) {
+                showMessage('Network error: ' + error.message, true);
+            }
+        }
+
+        async function addPaymentSubmit(event) {
+            event.preventDefault();
+            
+            if (!currentPaymentMonth) return;
+            
+            const amount = parseFloat(document.getElementById('paymentAmount').value);
+            
+            if (!amount || amount <= 0) {
+                showMessage('Please enter a valid payment amount', true);
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/months/${currentPaymentMonth}/payments`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ amount })
+                });
+
+                if (response.ok) {
+                    showMessage(`Payment of ${formatCurrency(amount)} added successfully!`);
+                    closePaymentModal();
+                    await loadMonths();
+                } else {
+                    const error = await response.json();
+                    showMessage(error.error || 'Error adding payment', true);
                 }
             } catch (error) {
                 showMessage('Network error: ' + error.message, true);
@@ -1042,72 +1290,46 @@ HTML_TEMPLATE = '''<!DOCTYPE html>
         }
 
         document.getElementById('monthForm').addEventListener('submit', createMonth);
-        document.addEventListener('DOMContentLoaded', loadMonths);
+        document.getElementById('addCostForm').addEventListener('submit', addAdditionalCost);
+        document.getElementById('paymentForm').addEventListener('submit', addPaymentSubmit);
         
-        // Console input handling
-        document.getElementById('consoleInput').addEventListener('keydown', function(e) {
-            if (e.key === 'Enter') {
-                const command = this.value;
-                this.value = '';
-                executeCliCommand(command);
-            } else if (e.key === 'ArrowUp') {
-                e.preventDefault();
-                if (historyIndex < consoleHistory.length - 1) {
-                    historyIndex++;
-                    this.value = consoleHistory[historyIndex] || '';
-                }
-            } else if (e.key === 'ArrowDown') {
-                e.preventDefault();
-                if (historyIndex > 0) {
-                    historyIndex--;
-                    this.value = consoleHistory[historyIndex] || '';
-                } else if (historyIndex === 0) {
-                    historyIndex = -1;
-                    this.value = '';
-                }
-            }
-        });
-        
-        document.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape') {
-                closeModal();
-                closeSummaryModal();
-            }
-            if (e.ctrlKey && e.key === 'n') {
-                e.preventDefault();
-                openModal();
-            }
-            if (e.ctrlKey && e.key === '`') {
-                e.preventDefault();
-                toggleConsole();
-            }
+        document.addEventListener('DOMContentLoaded', function() {
+            loadMonths();
         });
 
-        // Close summary modal when clicking outside
         window.addEventListener('click', function(event) {
             const summaryModal = document.getElementById('summaryModal');
             const monthModal = document.getElementById('monthModal');
+            const editModal = document.getElementById('editModal');
+            const addCostModal = document.getElementById('addCostModal');
+            const paymentModal = document.getElementById('paymentModal');
+            
             if (event.target === summaryModal) {
                 closeSummaryModal();
             }
             if (event.target === monthModal) {
                 closeModal();
             }
+            if (event.target === editModal) {
+                closeEditModal();
+            }
+            if (event.target === addCostModal) {
+                closeAddCostModal();
+            }
+            if (event.target === paymentModal) {
+                closePaymentModal();
+            }
         });
     </script>
 </body>
 </html>'''
 
-# Routes - same as before but serving the new template
-
 @app.route('/')
 def home():
-    """Serve the beautiful spreadsheet interface"""
     return render_template_string(HTML_TEMPLATE)
 
 @app.route('/api/months', methods=['GET'])
 def get_all_months():
-    """Same as: tracker -l"""
     try:
         months_dict = load_data()
         result = []
@@ -1123,7 +1345,6 @@ def get_all_months():
 
 @app.route('/api/months/<month_name>', methods=['GET'])
 def get_month(month_name):
-    """Same as: tracker -l YYYY-MM"""
     try:
         months_dict = load_data()
         if month_name not in months_dict:
@@ -1135,7 +1356,6 @@ def get_month(month_name):
 
 @app.route('/api/months', methods=['POST'])
 def create_month():
-    """Same as: tracker -n YYYY-MM"""
     try:
         data = request.get_json()
         months_dict = load_data()
@@ -1157,6 +1377,7 @@ def create_month():
             float(data.get('electric', 0)),
             float(data.get('water', 0)),
             float(data.get('internet', 0)),
+            [],
             []
         )
         
@@ -1167,147 +1388,136 @@ def create_month():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-@app.route('/api/months/<month_name>', methods=['DELETE'])
-def delete_month_route(month_name):
-    """Same as: tracker -d YYYY-MM"""
+@app.route('/api/months/<month_name>', methods=['PUT'])
+def update_month(month_name):
     try:
+        data = request.get_json()
         months_dict = load_data()
+        
         if month_name not in months_dict:
             return jsonify({'error': 'Month not found'}), 404
         
-        del months_dict[month_name]
+        month_obj = months_dict[month_name]
+        
+        if 'rent' in data:
+            month_obj.rent = float(data['rent'])
+        if 'heating' in data:
+            month_obj.heating = float(data['heating'])
+        if 'electric' in data:
+            month_obj.electric = float(data['electric'])
+        if 'water' in data:
+            month_obj.water = float(data['water'])
+        if 'internet' in data:
+            month_obj.internet = float(data['internet'])
+        
         save_data(months_dict)
-        return jsonify({'message': f'Month {month_name} deleted successfully'})
+        return jsonify(month_obj.to_dict())
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-@app.route('/api/cli', methods=['POST'])
-def execute_cli_command():
-    """Execute CLI commands via web interface"""
+@app.route('/api/months/<month_name>/additional-costs', methods=['POST'])
+def add_additional_cost(month_name):
     try:
         data = request.get_json()
-        command = data.get('command', '').strip()
+        months_dict = load_data()
         
-        if not command:
-            return jsonify({'error': 'No command provided'}), 400
+        if month_name not in months_dict:
+            return jsonify({'error': 'Month not found'}), 404
         
-        # Parse the command (simplified CLI parser)
-        parts = command.split()
+        month_obj = months_dict[month_name]
+        amount = float(data.get('amount', 0))
+        description = data.get('description', '').strip()
         
-        if not parts:
-            return jsonify({'error': 'Empty command'}), 400
+        if not description:
+            return jsonify({'error': 'Description is required'}), 400
         
-        # Handle help command
-        if parts[0] == 'help':
-            help_text = """Available CLI commands:
--l, --list                    List all months
--l YYYY-MM                   Show specific month summary  
--n YYYY-MM                   Create new month (interactive)
--d YYYY-MM                   Delete month
--e YYYY-MM -t UTILITY        Edit utility (rent, heating, electric, water, internet)
-
-Examples:
-tracker -l                   # List all months
-tracker -l 2025-01           # Show January 2025 summary
-tracker -n 2025-02           # Create February 2025 (will prompt for values)
-tracker -d 2025-01           # Delete January 2025
-tracker -e 2025-01 -t rent   # Edit rent for January 2025"""
-            return jsonify({'output': help_text, 'success': True, 'refresh_needed': False})
+        month_obj.add_additional_cost(amount, description)
+        save_data(months_dict)
         
-        # Handle list commands
-        if parts[0] in ['-l', '--list']:
-            months_dict = load_data()
-            
-            if len(parts) == 1:
-                # List all months
-                if not months_dict:
-                    return jsonify({'output': 'No months have been added yet', 'success': True, 'refresh_needed': False})
-                
-                output = "Listing all months...\\n"
-                for date, month_obj in months_dict.items():
-                    total = month_obj.calculate_total_month_due()
-                    output += f"  {date}: ${total:.2f}\\n"
-                
-                return jsonify({'output': output, 'success': True, 'refresh_needed': False})
-            
-            elif len(parts) == 2:
-                # Show specific month
-                month_name = parts[1]
-                if month_name not in months_dict:
-                    return jsonify({'error': f'No month found for {month_name}'}, 404)
-                
-                month_obj = months_dict[month_name]
-                
-                # Generate summary output (similar to display_summary)
-                output = f"MONTH SUMMARY: {month_obj.month_name}\\n"
-                output += "=" * 50 + "\\n\\n"
-                output += "FIXED MONTHLY COSTS:\\n"
-                output += f"   Rent:                ${month_obj.rent:.2f}\\n"
-                output += f"   Heating:             ${month_obj.heating:.2f}\\n"
-                output += f"   Electric:            ${month_obj.electric:.2f}\\n"
-                output += f"   Water:               ${month_obj.water:.2f}\\n"
-                output += f"   Internet:            ${month_obj.internet:.2f}\\n"
-                output += "-" * 35 + "\\n"
-                output += f"   Total Utilities:     ${month_obj.calculate_total_utilities():.2f}\\n"
-                output += f"   Your Utilities Share: ${month_obj.calculate_utilities_per_roommate():.2f}\\n\\n"
-                output += f"TOTAL HOUSING:       ${month_obj.calculate_total_housing_month_due():.2f}\\n\\n"
-                
-                # Additional costs
-                if month_obj.additional_costs:
-                    output += "ADDITIONAL COSTS:\\n"
-                    for i, cost in enumerate(month_obj.additional_costs, 1):
-                        output += f"   {i}. ${cost['amount']:.2f} - {cost['description']}\\n"
-                    output += f"   TOTAL: ${month_obj.calculate_total_additional_costs():.2f}\\n\\n"
-                else:
-                    output += "ADDITIONAL COSTS: None\\n\\n"
-                
-                output += "=" * 50 + "\\n"
-                output += f"TOTAL MONTH DUE:     ${month_obj.calculate_total_month_due():.2f}\\n"
-                output += "=" * 50
-                
-                return jsonify({'output': output, 'success': True, 'refresh_needed': False})
-        
-        # Handle delete command
-        elif parts[0] in ['-d', '--delete-month']:
-            if len(parts) != 2:
-                return jsonify({'error': 'Delete command requires month (YYYY-MM)'}, 400)
-            
-            month_name = parts[1]
-            months_dict = load_data()
-            
-            if month_name not in months_dict:
-                return jsonify({'error': f'No month found for {month_name}'}, 404)
-            
-            del months_dict[month_name]
-            save_data(months_dict)
-            
-            return jsonify({
-                'output': f'Deleted {month_name}',
-                'success': True,
-                'refresh_needed': True
-            })
-        
-        # Handle new month creation (simplified - no interactive prompts)
-        elif parts[0] in ['-n', '--new-entry']:
-            return jsonify({
-                'output': 'Use the "Add New Month" button above for creating new months via the web interface.',
-                'success': True,
-                'refresh_needed': False
-            })
-        
-        # Handle edit command (simplified)
-        elif parts[0] in ['-e', '--edit-month']:
-            return jsonify({
-                'output': 'Editing via CLI console is not yet implemented. Use the web interface or your original CLI.',
-                'success': True,
-                'refresh_needed': False
-            })
-        
-        else:
-            return jsonify({'error': f'Unknown command: {parts[0]}. Type "help" for available commands.'}, 400)
-            
+        return jsonify(month_obj.to_dict())
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+@app.route('/api/months/<month_name>/additional-costs/<int:cost_index>', methods=['PUT'])
+def update_additional_cost(month_name, cost_index):
+    try:
+        data = request.get_json()
+        months_dict = load_data()
+        
+        if month_name not in months_dict:
+            return jsonify({'error': 'Month not found'}), 404
+        
+        month_obj = months_dict[month_name]
+        
+        if cost_index < 0 or cost_index >= len(month_obj.additional_costs):
+            return jsonify({'error': 'Invalid cost index'}), 400
+        
+        amount = float(data.get('amount', 0))
+        description = data.get('description', '').strip()
+        
+        if not description:
+            return jsonify({'error': 'Description is required'}), 400
+        
+        month_obj.additional_costs[cost_index] = {
+            'amount': amount,
+            'description': description
+        }
+        
+        save_data(months_dict)
+        
+        return jsonify({
+            'message': f'Updated cost: ${amount:.2f} - {description}',
+            'updated_month': month_obj.to_dict()
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/months/<month_name>/additional-costs/<int:cost_index>', methods=['DELETE'])
+def delete_additional_cost(month_name, cost_index):
+    try:
+        months_dict = load_data()
+        
+        if month_name not in months_dict:
+            return jsonify({'error': 'Month not found'}), 404
+        
+        month_obj = months_dict[month_name]
+        
+        if cost_index < 0 or cost_index >= len(month_obj.additional_costs):
+            return jsonify({'error': 'Invalid cost index'}), 400
+        
+        deleted_cost = month_obj.additional_costs.pop(cost_index)
+        save_data(months_dict)
+        
+        return jsonify({
+            'message': f'Deleted cost: ${deleted_cost["amount"]:.2f} - {deleted_cost["description"]}',
+            'updated_month': month_obj.to_dict()
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/months/<month_name>/payments', methods=['POST'])
+def add_payment(month_name):
+    try:
+        data = request.get_json()
+        months_dict = load_data()
+        
+        if month_name not in months_dict:
+            return jsonify({'error': 'Month not found'}), 404
+        
+        month_obj = months_dict[month_name]
+        amount = float(data.get('amount', 0))
+        
+        if amount <= 0:
+            return jsonify({'error': 'Payment amount must be greater than 0'}), 400
+        
+        month_obj.add_payment(amount)
+        save_data(months_dict)
+        
+        return jsonify(month_obj.to_dict())
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 
 if __name__ == '__main__':
     print("Starting Budget Tracker Web App...")

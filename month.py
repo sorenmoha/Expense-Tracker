@@ -31,7 +31,7 @@ class Month:
     
     def calculate_utilities_per_roommate(self):
         total_utilities = self.calculate_total_utilities()
-        return total_utilities / 2                             # ADD: number of roommates adjustment in settings?
+        return total_utilities / 2                             
           
     def calculate_total_housing_month_due(self):
         utilities_per_roommate = self.calculate_utilities_per_roommate()
@@ -49,7 +49,7 @@ class Month:
         return sum(self.payments)
     
     def calculate_owed(self):
-        total_month_due = self.calculate_total_month_due()  # Fixed: added parentheses
+        total_month_due = self.calculate_total_month_due()
         total_payments = self.calculate_total_payments()
         return total_month_due - total_payments
 
@@ -58,11 +58,9 @@ class Month:
         print(f"Added payment of ${amount:.2f}")
 
     def add_additional_cost(self, amount, description):
-        self.display_additional_costs()
         cost_entry = {"amount": amount, "description": description}
         self.additional_costs.append(cost_entry)
         print(f"Added: ${amount:.2f} - {description}")
-        self.display_additional_costs()
 
     def edit_additional_cost(self, number_to_edit):
         try: 
@@ -125,16 +123,16 @@ class Month:
         if not self.additional_costs:
             print("No additional costs stored")
         else:
-            # Calculate the maximum description length for proper spacing
+           
             max_desc_len = max(len(cost['description']) for cost in self.additional_costs)
             desc_width = max(max_desc_len + 2, 20)  # At least 20 chars
             
-            # Print header
+           
             print("─" * (desc_width + 20))
             print(f"│ # │  Amount  │ Description{' ' * (desc_width - 11)}│")
             print("─" * (desc_width + 20))
             
-            # Print each row
+           
             for i, cost in enumerate(self.additional_costs, 1):
                 try:
                     amount = float(cost['amount'])
@@ -142,12 +140,12 @@ class Month:
                     amount = 0.0
                 
                 desc = cost['description']
-                # Pad description to fixed width
+                
                 desc_padded = f"{desc:<{desc_width}}"
                 
                 print(f"│ {i} │ ${amount:>7.2f} │ {desc_padded}│")
             
-            # Print total
+           
             print("─" * (desc_width + 20))
             total = self.calculate_total_additional_costs()
             total_desc = f"TOTAL{' ' * (desc_width - 5)}"
@@ -159,7 +157,7 @@ class Month:
         print(f"MONTH SUMMARY: {self.month_name}")
         print("=" * 50)
         
-        # Fixed Monthly Costs
+        
         print("\n FIXED MONTHLY COSTS:")
         print(f"   Rent:                ${self.rent:.2f}")
         print(f"   Heating:             ${self.heating:.2f}")
@@ -168,22 +166,21 @@ class Month:
         print(f"   Internet:            ${self.internet:.2f}")
         print("-" * 35)
         print(f"   Total Utilities:     ${self.calculate_total_utilities():.2f}")
-        print(f"   Your Utilities Share: ${self.calculate_utilities_per_roommate():.2f}")
+        print(f"   Utilities Share: ${self.calculate_utilities_per_roommate():.2f}")
         
-        # Housing Total
+       
         print(f"\n TOTAL HOUSING:       ${self.calculate_total_housing_month_due():.2f}")
         
         self.display_additional_costs()
         
-        # Grand Total
+       
         print("\n" + "=" * 50)
         print(f" TOTAL MONTH DUE:     ${self.calculate_total_month_due():.2f}")
         print("=" * 50)
         
-        # Payments
+        
         self.display_payments()
         
-        # Owed
         print("\n" + "=" * 50)
         print(f" AMOUNT OWED:         ${self.calculate_owed():.2f}")
         print("=" * 50)
@@ -203,7 +200,6 @@ class Month:
         print("=" * 40)
 
     def to_dict(self):
-        #Convert Month object to dictionary for JSON responses
         return {
             'month_name': self.month_name,
             'rent': self.rent,
@@ -217,5 +213,5 @@ class Month:
             'total_additional_costs': self.calculate_total_additional_costs(),
             'total_month_due': self.calculate_total_month_due(),
             'additional_costs': self.additional_costs,
-            'payments': self.payments
+            'payments': self.payments 
         }

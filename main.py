@@ -60,7 +60,6 @@ def main():
     parser.add_argument("-p", "--paid", metavar="YYYY-MM",
             help="Add amount paid for the month")
     
-    # Check if no arguments provided
     if len(sys.argv) == 1:
         parser.error("No command provided. Use --help for usage information.")
     
@@ -91,7 +90,6 @@ def main():
         elif args.edit_cost:
             edit_additional_cost_interactive(args.edit_cost, months_dict)
 
-        # delete additional cost entry within month 
         elif args.delete_cost:
             delete_additional_cost_interactive(args.delete_cost, months_dict)
             

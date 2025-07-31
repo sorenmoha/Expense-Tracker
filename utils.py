@@ -4,7 +4,6 @@ import json
 
 
 def create_new_month(month_name = None):
-
     print("Creating new month...")
        
     if month_name is None:
@@ -30,19 +29,18 @@ def get_month_input():
     while True:
         try:
             month_str = input("Enter month/year (YYYY-MM): ")
-            
             date_obj = datetime.datetime.strptime(month_str, "%Y-%m")
             return month_str
         except ValueError:
             print("Please enter valid format YYYY-MM")
 
-def get_dollar_input(type):  #type is what to take dollar input for (ex: the rent, an additional cost) 
+def get_dollar_input(type):
     while True:
         try:
             amount = float(input(f"Enter Amount for {type}: "))
             return round(amount, 2)
         except ValueError:
-            print("Please enter a valid dollar amount")
+            print(" enter a valid dollar amount")
 
 def delete_month(month_date_to_delete, months_dict):
     print(f"deleting {month_date_to_delete}")
@@ -83,16 +81,22 @@ def add_additional_cost_interactive(month_date, months_dict):
     if month_date not in months_dict:
         print(f"No month found for {month_date}")
         return
+    
+    print(f"\nAdding additional cost to {month_date}")
     months_dict[month_date].display_additional_costs()
+    
     amount = get_dollar_input("Additional cost")
     description = input("Enter the description: ")
 
-    if not description: 
-        print("description cannot be empty")
+    if not description.strip(): 
+        print("Description cannot be empty")
         return
+        
     months_dict[month_date].add_additional_cost(amount, description)
-    print(f"added: {amount} description: {description}" )
     save_data(months_dict)
+    
+    print(f"\nUpdated additional costs:")
+    months_dict[month_date].display_additional_costs()
     
 def add_payment_cost_interactive(date_selected, months_dict):
     try:
@@ -106,17 +110,14 @@ def add_payment_cost_interactive(date_selected, months_dict):
         print(f"No month found for {date_selected}")
         return
     
-    # Show current payment summary first
     months_dict[date_selected].display_payment_summary()
     
     payment_amount = get_dollar_input("payment")
     months_dict[date_selected].add_payment(payment_amount)
+    save_data(months_dict)
     
-    # Show updated payment summary
     print("\nUpdated payment summary:")
     months_dict[date_selected].display_payment_summary()
-    
-    save_data(months_dict)
 
 def edit_additional_cost_interactive(date_selected, months_dict):
     try:
@@ -134,11 +135,17 @@ def edit_additional_cost_interactive(date_selected, months_dict):
         print("No additional costs to edit.")
         return
     
+    print(f"\nEditing additional costs for {date_selected}")
     months_dict[date_selected].display_additional_costs()
+    
     number_to_edit = input("Which additional cost to edit? (Enter #): ")
 
     if months_dict[date_selected].edit_additional_cost(number_to_edit):
         save_data(months_dict)
+        print(f"\nSuccessfully updated additional cost.")
+        months_dict[date_selected].display_additional_costs()
+    else:
+        print("Edit operation cancelled or failed.")
     
 def delete_additional_cost_interactive(date_selected, months_dict):
     try:
@@ -156,34 +163,32 @@ def delete_additional_cost_interactive(date_selected, months_dict):
         print("No additional costs to delete.")
         return
     
+    print(f"\nDeleting additional cost from {date_selected}")
     months_dict[date_selected].display_additional_costs()
         
     number_to_delete = input("Which additional cost to delete? (Enter #): ")
     if months_dict[date_selected].delete_additional_cost(number_to_delete):
         save_data(months_dict)
+        print(f"\nSuccessfully deleted additional cost.")
+        months_dict[date_selected].display_additional_costs()
+    else:
+        print("Delete operation cancelled or failed.")
 
-    
-
-# IO helpers 
 def save_data(months_dict):
-    """Save months_dict to tracker_data.json"""
-    json_data = months_dict_to_json(months_dict)  # Convert objects to dict
+    json_data = months_dict_to_json(months_dict)
     with open("tracker_data.json", "w") as f:
         json.dump(json_data, f, indent=2)
     print("Data saved successfully!")
 
 def load_data():
-    """Load data from tracker_data.json and return months_dict"""
     try:
         with open("tracker_data.json", "r") as f:
             json_data = json.load(f)
-            return json_to_months_dict(json_data)  # Convert dict back to objects
+            return json_to_months_dict(json_data)
     except FileNotFoundError:
-        return {}  # Return empty dict if file doesn't exist
+        return {}
     
-
 def months_dict_to_json(months_dict):
-    """Convert months_dict with Month objects to JSON-serializable format"""
     json_data = {}
     for month_name, month_obj in months_dict.items():
         json_data[month_name] = {
@@ -198,9 +203,7 @@ def months_dict_to_json(months_dict):
         }
     return json_data    
 
-
 def json_to_months_dict(json_data):
-    """Convert JSON data back to months_dict with Month objects"""
     months_dict = {}
     for month_name, month_data in json_data.items():
         month_obj = Month(
@@ -211,7 +214,7 @@ def json_to_months_dict(json_data):
             month_data['water'],
             month_data['internet'],
             month_data['additional_costs'],
-            month_data.get('payments', [])  # Fixed: use .get() with parentheses
+            month_data.get('payments', [])
         )
         months_dict[month_name] = month_obj
     return months_dict
